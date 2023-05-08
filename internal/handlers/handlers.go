@@ -32,12 +32,12 @@ func IsExist(token string) bool {
 	return storage.IsExist(token)
 }
 
-func APIShortURL(db Storage, res http.ResponseWriter, req *http.Request) {
+func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
 	body, _ := io.ReadAll(req.Body)
 	token := db.GenerateToken(6)
 	db.SaveToFile(token, string(body))
 	res.WriteHeader(http.StatusCreated)
-	res.Write([]byte("http://localhost:8080/" + token))
+	res.Write([]byte(serverHost + req.RequestURI + token))
 }
 
 func APIGetBigURL(db Storage, res http.ResponseWriter, req *http.Request) {

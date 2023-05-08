@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/handlers"
 	"github.com/darod1n/urlshorten/internal/storage"
 	"github.com/gorilla/mux"
@@ -34,6 +35,8 @@ func (db *DBStorage) IsExist(token string) bool {
 }
 
 func main() {
+	serverConfig := config.NewConfig()
+
 	router := mux.NewRouter()
 
 	db := &DBStorage{}
@@ -42,12 +45,12 @@ func main() {
 
 	}).Methods("GET")
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.APIShortURL(db, w, r)
+		handlers.APIShortURL(serverConfig.ServerHost, db, w, r)
 	}).Methods("POST")
 
 	http.Handle("/", router)
 
-	err := http.ListenAndServe(`:8080`, nil)
+	err := http.ListenAndServe(serverConfig.Addr, nil)
 	if err != nil {
 		panic(err)
 	}

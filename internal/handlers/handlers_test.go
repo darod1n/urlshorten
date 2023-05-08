@@ -68,7 +68,9 @@ func TestAPIShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 			db := &storageMock{tokens: make(map[string]string)}
 
-			APIShortURL(db, w, request)
+			serverHost := "http://localhost:8080"
+			APIShortURL(serverHost, db, w, request)
+
 			res := w.Result()
 
 			assert.Equal(t, res.StatusCode, test.want.code)
