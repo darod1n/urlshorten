@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/darod1n/urlshorten/internal/handlers"
@@ -50,7 +49,6 @@ func main() {
 
 	err := http.ListenAndServe(`:8080`, nil)
 	if err != nil {
-		fmt.Println("Ошибочка")
 		panic(err)
 	}
 }
