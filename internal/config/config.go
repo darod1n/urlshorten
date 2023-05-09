@@ -11,23 +11,18 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	envAddr := os.Getenv("SERVER_ADDRESS")
-	envServerHost := os.Getenv("BASE_URL")
-	addr := flag.String("a", ":8080", "")
-	serverHost := flag.String("b", "http://localhost:8080", "server adress")
+	config := &Config{}
+	config.Addr = os.Getenv("SERVER_ADDRESS")
+	config.ServerHost = os.Getenv("BASE_URL")
 
+	if config.Addr == "" {
+		flag.StringVar(&config.Addr, "a", ":8080", "http-server address")
+	}
+
+	if config.ServerHost == "" {
+		flag.StringVar(&config.ServerHost, "b", "http://localhost:8080", "base address result short url")
+	}
 	flag.Parse()
 
-	if envAddr != "" {
-		addr = &envAddr
-	}
-
-	if envServerHost != "" {
-		serverHost = &envServerHost
-	}
-
-	return &Config{
-		Addr:       *addr,
-		ServerHost: *serverHost,
-	}
+	return config
 }
