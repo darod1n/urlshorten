@@ -11,7 +11,7 @@ import (
 func GenerateToken(lenToken int) string {
 	var token string
 	rand.Seed(time.Now().UnixNano())
-	alphabet := GetStrFromFile("alphabet")
+	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	for i := 0; i < lenToken; i++ {
 		r := rand.Intn(len(alphabet))
 		token += string(alphabet[r])
