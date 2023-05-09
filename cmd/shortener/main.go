@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/darod1n/urlshorten/internal/config"
@@ -41,6 +42,8 @@ func main() {
 
 	db := &DBStorage{}
 	router.HandleFunc("/{token:[a-zA-z0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+		t := mux.Vars(r)["token"]
+		fmt.Println(t)
 		handlers.APIGetBigURL(db, w, r)
 
 	}).Methods("GET")
