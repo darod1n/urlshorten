@@ -9,14 +9,14 @@ import (
 )
 
 func GenerateToken(lenToken int) string {
-	var token string
+	var shortURL []byte
 	rand.Seed(time.Now().UnixNano())
 	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	for i := 0; i < lenToken; i++ {
 		r := rand.Intn(len(alphabet))
-		token += string(alphabet[r])
+		shortURL = append(shortURL, alphabet[r])
 	}
-	return token
+	return string(shortURL)
 }
 
 func GetStrFromFile(path string) string {
