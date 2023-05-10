@@ -1,46 +1,25 @@
 package handlers
 
 import (
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
 
-type storageMock struct {
-	tokens map[string]string
+type MockDB struct {
+	urls map[string]string
 }
 
-func (db *storageMock) GenerateToken(lenToken int) string {
-	var token string
-	rand.Seed(time.Now().UnixNano())
-	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	for i := 0; i < lenToken; i++ {
-		r := rand.Intn(len(alphabet))
-		token += string(alphabet[r])
-	}
-	return token
+func (db *MockDB) AddURL(url string, shortURL string) {
+	db.urls[shortURL] = url
 }
 
-func (db *storageMock) GetStrFromFile(path string) string {
-	return db.tokens[path]
-}
-
-func (db *storageMock) SaveToFile(path string, str string) {
-	db.tokens[path] = str
-}
-
-func (db *storageMock) IsExist(token string) bool {
-	if _, ok := db.tokens[token]; ok {
-		return true
-	} else {
-		return false
-	}
+func (db *MockDB) GetURL(shortURL string) (string, bool) {
+	bigURL, ok := db.urls[shortURL]
+	return bigURL, ok
 }
 
 func TestAPIShortURL(t *testing.T) {
@@ -66,15 +45,14 @@ func TestAPIShortURL(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, "/", bodyReader)
 
 			w := httptest.NewRecorder()
-			db := &storageMock{tokens: make(map[string]string)}
-
+			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
 			APIShortURL(serverHost, db, w, request)
-
 			res := w.Result()
+			defer res.Body.Close()
 
 			assert.Equal(t, res.StatusCode, test.want.code)
-			defer res.Body.Close()
+
 		})
 	}
 }
@@ -91,46 +69,42 @@ func TestAPIGetBigURL(t *testing.T) {
 		addToken  bool
 	}{
 		{
-			name: "positive test #1",
+			name: "positive test #1: existing short URL",
 			want: want{
 				code:     307,
 				location: "https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter",
 			},
-			testToken: "/hR3K3F",
+			testToken: "hR3K3F",
 			addToken:  true,
 		},
 		{
-			name: "positive test #2",
+			name: "positive test #2: not existing short URL",
 			want: want{
 				code:     400,
 				location: "",
 			},
-			testToken: "/hR3K3F2",
+			testToken: "hR3K3F2",
 			addToken:  false,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-
-			request := httptest.NewRequest(http.MethodGet, test.testToken, nil)
+			request := httptest.NewRequest(http.MethodGet, "/"+test.testToken, nil)
 
 			w := httptest.NewRecorder()
-			db := &storageMock{tokens: make(map[string]string)}
-			if test.addToken {
-				db.SaveToFile(test.testToken, test.want.location)
-			}
+			db := &MockDB{urls: map[string]string{}}
 
-			tokens := map[string]string{
-				"token": test.testToken,
+			if test.addToken {
+				db.AddURL(test.want.location, test.testToken)
 			}
-			request = mux.SetURLVars(request, tokens)
 
 			APIGetBigURL(db, w, request)
 
 			res := w.Result()
+			defer res.Body.Close()
+
 			assert.Equal(t, res.StatusCode, test.want.code)
 
-			defer res.Body.Close()
 		})
 	}
 }
