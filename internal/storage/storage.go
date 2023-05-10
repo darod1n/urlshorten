@@ -1,14 +1,15 @@
 package storage
 
 import (
-	"fmt"
-	"io"
 	"math/rand"
-	"os"
 	"time"
 )
 
-func GenerateToken(lenToken int) string {
+type Storage struct {
+	urls map[string]string
+}
+
+func (s *Storage) GenerateShortURL(lenToken int) string {
 	var shortURL []byte
 	rand.Seed(time.Now().UnixNano())
 	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -19,44 +20,15 @@ func GenerateToken(lenToken int) string {
 	return string(shortURL)
 }
 
-func GetStrFromFile(path string) string {
-	var str string
-	dir, _ := os.Getwd()
-	file, err := os.Open(dir + "/secrets/" + path)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	data := make([]byte, 64)
-	for {
-		n, err := file.Read(data)
-		if err == io.EOF {
-			break
-		}
-		str += string(data[:n])
-	}
-
-	return str
+func (s *Storage) AddToStorage(url string, shortURL string) {
+	s.urls[shortURL] = url
 }
 
-func SaveToFile(path string, str string) {
-	dir, _ := os.Getwd()
-	file, err := os.Create(dir + "/secrets/" + path)
-	if err != nil {
-		os.Exit(1)
-	}
-
-	defer file.Close()
-	file.WriteString(str)
+func (s *Storage) GetURL(shortURL string) (string, bool) {
+	bigURL, ok := s.urls[shortURL]
+	return bigURL, ok
 }
 
-func IsExist(token string) bool {
-	dir, _ := os.Getwd()
-	if _, err := os.Stat(dir + "/secrets/" + token); os.IsNotExist(err) {
-		return false
-	} else {
-		return true
-	}
+func NewStorage() *Storage {
+	return &Storage{urls: map[string]string{}}
 }
