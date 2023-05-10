@@ -13,16 +13,7 @@ type DB struct {
 }
 
 type Storage interface {
-	AddURL(url string, shortURL string)
-	GetURL(shortURL string) (string, bool)
-}
-
-func (db *DB) AddURL(url string, shortURL string) {
-	db.AddURL(url, shortURL)
-}
-
-func (db *DB) GetURL(shortURL string) (string, bool) {
-	return db.GetURL(shortURL)
+	storage.Storage
 }
 
 func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
