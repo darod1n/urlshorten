@@ -4,8 +4,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/storage"
-	"github.com/darod1n/urlshorten/internal/util"
 )
 
 type DB struct {
@@ -29,7 +29,7 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 	if body, err := io.ReadAll(req.Body); err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 	} else {
-		shortURL := util.GenerateShortURL(6)
+		shortURL := helpers.GenerateShortURL(6)
 		db.AddURL(string(body), shortURL)
 		res.WriteHeader(http.StatusCreated)
 		res.Write([]byte(serverHost + req.RequestURI + shortURL))
