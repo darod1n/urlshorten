@@ -15,14 +15,20 @@ func NewConfig() *Config {
 	config.Addr = os.Getenv("SERVER_ADDRESS")
 	config.ServerHost = os.Getenv("BASE_URL")
 
+	var flagAddr string
+	var flagServerHost string
+
+	flag.StringVar(&flagAddr, "a", ":8080", "http-server address")
+	flag.StringVar(&flagServerHost, "b", "http://localhost:8080", "base address result short url")
+	flag.Parse()
+
 	if config.Addr == "" {
-		flag.StringVar(&config.Addr, "a", ":8080", "http-server address")
+		config.Addr = flagAddr
 	}
 
 	if config.ServerHost == "" {
-		flag.StringVar(&config.ServerHost, "b", "http://localhost:8080", "base address result short url")
+		config.ServerHost = flagServerHost
 	}
-	flag.Parse()
 
 	return config
 }
