@@ -5,7 +5,7 @@ import (
 )
 
 func GenerateShortURL(lenToken int) string {
-	var shortURL []byte
+	shortURL := make([]byte, 0, lenToken)
 	alphabet := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	for i := 0; i < lenToken; i++ {
 		r := rand.Intn(len(alphabet))
