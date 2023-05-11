@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
 )
@@ -19,7 +20,8 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 		shortURL := helpers.GenerateShortURL(6)
 		db.AddURL(string(body), shortURL)
 		res.WriteHeader(http.StatusCreated)
-		res.Write([]byte(serverHost + req.RequestURI + shortURL))
+		resultURL, _ := url.JoinPath(serverHost, shortURL)
+		res.Write([]byte(resultURL))
 	}
 
 }
