@@ -5,15 +5,11 @@ import (
 	"net/http"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
-	"github.com/darod1n/urlshorten/internal/storage"
 )
 
-type DB struct {
-	storage.DB
-}
-
 type Storage interface {
-	storage.Storage
+	AddURL(url string, shortURL string)
+	GetURL(shortURL string) (string, bool)
 }
 
 func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
