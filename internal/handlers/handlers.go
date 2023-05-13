@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -21,7 +22,8 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 		db.AddURL(string(body), shortURL)
 		res.WriteHeader(http.StatusCreated)
 		resultURL, _ := url.JoinPath(serverHost, shortURL)
-		res.Write([]byte(resultURL))
+		_, err := res.Write([]byte(resultURL))
+		log.Fatalf(err.Error())
 	}
 
 }
