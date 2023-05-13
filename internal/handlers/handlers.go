@@ -23,7 +23,9 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 		res.WriteHeader(http.StatusCreated)
 		resultURL, _ := url.JoinPath(serverHost, shortURL)
 		_, err := res.Write([]byte(resultURL))
-		log.Fatalf(err.Error())
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
 	}
 
 }
