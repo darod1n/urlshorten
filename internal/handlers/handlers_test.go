@@ -39,6 +39,7 @@ func TestAPIShortURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			bodyReader := strings.NewReader(`https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter`)
 
@@ -89,6 +90,7 @@ func TestAPIGetBigURL(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
+		test := test
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "/"+test.testToken, nil)
 
