@@ -14,6 +14,8 @@ func (db *DB) AddURL(url string, shortURL string) {
 }
 
 func (db *DB) GetURL(shortURL string) (string, bool) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	bigURL, ok := db.urls[shortURL]
 	return bigURL, ok
 }
