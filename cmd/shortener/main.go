@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/handlers"
@@ -15,7 +17,7 @@ func main() {
 	router := chi.NewRouter()
 
 	db := storage.NewDB()
-	router.Get("/{shortURL:[a-zA-Z0-9]+}", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
 		handlers.APIGetBigURL(shortURL, db, w, r)
 	})
@@ -28,6 +30,7 @@ func main() {
 
 	err := http.ListenAndServe(serverConfig.Addr, nil)
 	if err != nil {
-		panic(err)
+		log.Fatalf(err.Error())
+		os.Exit(1)
 	}
 }
