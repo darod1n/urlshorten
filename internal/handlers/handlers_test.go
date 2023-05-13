@@ -48,6 +48,7 @@ func TestAPIShortURL(t *testing.T) {
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
 			APIShortURL(serverHost, db, w, request)
+
 			res := w.Result()
 			defer res.Body.Close()
 
@@ -98,7 +99,7 @@ func TestAPIGetBigURL(t *testing.T) {
 				db.AddURL(test.want.location, test.testToken)
 			}
 
-			APIGetBigURL(db, w, request)
+			APIGetBigURL(test.testToken, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()

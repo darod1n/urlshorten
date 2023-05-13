@@ -26,8 +26,7 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 
 }
 
-func APIGetBigURL(db Storage, res http.ResponseWriter, req *http.Request) {
-	shortURL := req.RequestURI[1:]
+func APIGetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
 	if bigURL, ok := db.GetURL(shortURL); ok {
 		res.Header().Set("Location", bigURL)
 		res.WriteHeader(http.StatusTemporaryRedirect)

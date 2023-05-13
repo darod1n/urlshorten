@@ -16,7 +16,8 @@ func main() {
 
 	db := storage.NewDB()
 	router.Get("/{shortURL:[a-zA-Z0-9]+}", func(w http.ResponseWriter, r *http.Request) {
-		handlers.APIGetBigURL(db, w, r)
+		shortURL := chi.URLParam(r, "shortURL")
+		handlers.APIGetBigURL(shortURL, db, w, r)
 	})
 
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
