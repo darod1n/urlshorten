@@ -1,10 +1,15 @@
 package storage
 
+import "sync"
+
 type DB struct {
 	urls map[string]string
+	mu   sync.Mutex
 }
 
 func (db *DB) AddURL(url string, shortURL string) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	db.urls[shortURL] = url
 }
 
