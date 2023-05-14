@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/handlers"
@@ -30,7 +29,6 @@ func main() {
 
 	err := http.ListenAndServe(serverConfig.Addr, nil)
 	if err != nil {
-		log.Fatalf(err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
