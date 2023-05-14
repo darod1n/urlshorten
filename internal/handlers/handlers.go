@@ -17,7 +17,7 @@ type Storage interface {
 func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
 	body, errBody := io.ReadAll(req.Body)
 	if errBody != nil {
-		log.Fatal(errBody)
+		log.Print(errBody)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -30,12 +30,12 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 
 	if errURL != nil {
-		log.Fatal(errURL)
+		log.Print(errURL)
 		return
 	}
 
 	if _, errWrite := res.Write([]byte(resultURL)); errWrite != nil {
-		log.Fatal(errWrite)
+		log.Print(errWrite)
 	}
 }
 
