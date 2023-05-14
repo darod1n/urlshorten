@@ -14,7 +14,7 @@ type Storage interface {
 	GetURL(shortURL string) (string, bool)
 }
 
-func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
+func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
 	if body, err := io.ReadAll(req.Body); err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 	} else {
@@ -30,7 +30,7 @@ func APIShortURL(serverHost string, db Storage, res http.ResponseWriter, req *ht
 
 }
 
-func APIGetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
+func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
 	if bigURL, ok := db.GetURL(shortURL); ok {
 		res.Header().Set("Location", bigURL)
 		res.WriteHeader(http.StatusTemporaryRedirect)

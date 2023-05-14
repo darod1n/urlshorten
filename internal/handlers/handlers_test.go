@@ -22,7 +22,7 @@ func (db *MockDB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func TestAPIShortURL(t *testing.T) {
+func TestShortURL(t *testing.T) {
 	type want struct {
 		code int
 	}
@@ -48,7 +48,7 @@ func TestAPIShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
-			APIShortURL(serverHost, db, w, request)
+			ShortURL(serverHost, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()
@@ -59,7 +59,7 @@ func TestAPIShortURL(t *testing.T) {
 	}
 }
 
-func TestAPIGetBigURL(t *testing.T) {
+func TestGetBigURL(t *testing.T) {
 	type want struct {
 		code     int
 		location string
@@ -101,7 +101,7 @@ func TestAPIGetBigURL(t *testing.T) {
 				db.AddURL(test.want.location, test.testToken)
 			}
 
-			APIGetBigURL(test.testToken, db, w, request)
+			GetBigURL(test.testToken, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()
