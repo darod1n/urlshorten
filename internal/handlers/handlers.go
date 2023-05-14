@@ -15,26 +15,36 @@ type Storage interface {
 }
 
 func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
-	if body, err := io.ReadAll(req.Body); err != nil {
+	body, errBody := io.ReadAll(req.Body)
+	if errBody != nil {
+		log.Fatal(errBody)
 		res.WriteHeader(http.StatusBadRequest)
-	} else {
-		shortURL := helpers.GenerateShortURL(6)
-		db.AddURL(string(body), shortURL)
-		res.WriteHeader(http.StatusCreated)
-		resultURL, _ := url.JoinPath(serverHost, shortURL)
-		_, err := res.Write([]byte(resultURL))
-		if err != nil {
-			log.Fatal(err)
-		}
+		return
 	}
 
+	shortURL := helpers.GenerateShortURL(6)
+	db.AddURL(string(body), shortURL)
+
+	res.WriteHeader(http.StatusCreated)
+
+	resultURL, errURL := url.JoinPath(serverHost, shortURL)
+
+	if errURL != nil {
+		log.Fatal(errURL)
+	}
+
+	if _, errWrite := res.Write([]byte(resultURL)); errWrite != nil {
+		log.Fatal(errWrite)
+	}
 }
 
 func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
-	if bigURL, ok := db.GetURL(shortURL); ok {
-		res.Header().Set("Location", bigURL)
-		res.WriteHeader(http.StatusTemporaryRedirect)
-	} else {
+	bigURL, ok := db.GetURL(shortURL)
+	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
+	res.Header().Set("Location", bigURL)
+	res.WriteHeader(http.StatusTemporaryRedirect)
 }
