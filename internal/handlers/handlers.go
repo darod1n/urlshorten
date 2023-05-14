@@ -24,7 +24,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 		resultURL, _ := url.JoinPath(serverHost, shortURL)
 		_, err := res.Write([]byte(resultURL))
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err)
 		}
 	}
 
