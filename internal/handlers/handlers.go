@@ -31,6 +31,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 	if errURL != nil {
 		log.Fatal(errURL)
+		return
 	}
 
 	if _, errWrite := res.Write([]byte(resultURL)); errWrite != nil {
