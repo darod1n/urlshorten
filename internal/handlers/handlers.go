@@ -31,11 +31,13 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 	if errURL != nil {
 		log.Print(errURL)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if _, errWrite := res.Write([]byte(resultURL)); errWrite != nil {
 		log.Print(errWrite)
+		res.WriteHeader(http.StatusBadRequest)
 	}
 }
 
