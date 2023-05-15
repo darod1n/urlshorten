@@ -4,22 +4,22 @@ import "sync"
 
 type DB struct {
 	urls map[string]string
-	sync.Mutex
+	mu   *sync.Mutex
 }
 
 func (db *DB) AddURL(url string, shortURL string) {
-	db.Lock()
-	defer db.Unlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	db.urls[shortURL] = url
 }
 
 func (db *DB) GetURL(shortURL string) (string, bool) {
-	db.Lock()
-	defer db.Unlock()
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	bigURL, ok := db.urls[shortURL]
 	return bigURL, ok
 }
 
 func NewDB() *DB {
-	return &DB{urls: map[string]string{}}
+	return &DB{urls: map[string]string{}, mu: &sync.Mutex{}}
 }
