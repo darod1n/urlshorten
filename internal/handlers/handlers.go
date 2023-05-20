@@ -51,3 +51,5 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 	res.Header().Set("Location", bigURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
+
+func APIShortenURL() {}
