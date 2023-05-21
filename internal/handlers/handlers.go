@@ -61,25 +61,6 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-/*
-Запрос
-POST http://localhost:8080/api/shorten HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
-
-	{
-	  "url": "https://practicum.yandex.ru"
-	}
-
-Ответ
-HTTP/1.1 200 OK
-Content-Type: application/json
-Content-Length: 30
-
-	{
-	 "result": "http://localhost:8080/EwHXdJfB"
-	}
-*/
 func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *http.Request) {
 	var data Data
 	var result result
