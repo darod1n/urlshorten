@@ -16,7 +16,7 @@ type Storage interface {
 	GetURL(shortURL string) (string, bool)
 }
 
-type Data struct {
+type data struct {
 	URL string `json:"url"`
 }
 type result struct {
@@ -62,7 +62,7 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 }
 
 func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *http.Request) {
-	var data Data
+	var d data
 	var result result
 
 	var buf bytes.Buffer
@@ -71,15 +71,14 @@ func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *
 		return
 	}
 
-	if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
 		log.Print(err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	//bigURL := data.URL
 	shortURL := helpers.GenerateShortURL(6)
-	db.AddURL(data.URL, shortURL)
+	db.AddURL(d.URL, shortURL)
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 	if errURL != nil {
 		log.Print(errURL)
