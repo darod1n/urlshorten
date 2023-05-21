@@ -111,3 +111,24 @@ func TestGetBigURL(t *testing.T) {
 		})
 	}
 }
+
+func TestAPIShortenURL(t *testing.T) {
+	type want struct {
+	}
+	tests := []struct {
+		name string
+	}{
+
+		{
+			name: "positive test #1",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+
+		})
+
+	}
+}
