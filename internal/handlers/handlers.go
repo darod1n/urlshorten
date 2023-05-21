@@ -97,5 +97,5 @@ func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *
 
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(ans))
+	res.Write(ans)
 }
