@@ -82,8 +82,8 @@ Content-Length: 30
 */
 func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *http.Request) {
 	var data Data
-
 	var result result
+
 	var buf bytes.Buffer
 	_, errBody := buf.ReadFrom(req.Body)
 	if errBody != nil {
@@ -91,15 +91,28 @@ func APIShortenURL(db Storage, serverHost string, res http.ResponseWriter, req *
 	}
 
 	if err := json.Unmarshal(buf.Bytes(), &data); err != nil {
+		log.Print(err)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	bigURL := data.URL
+	//bigURL := data.URL
 	shortURL := helpers.GenerateShortURL(6)
-	result.Result = serverHost + shortURL
-	db.AddURL(bigURL, shortURL)
+	db.AddURL(data.URL, shortURL)
+	resultURL, errURL := url.JoinPath(serverHost, shortURL)
+	if errURL != nil {
+		log.Print(errURL)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	result.Result = resultURL
 
-	ans, _ := json.Marshal(result)
+	ans, errJSON := json.Marshal(result)
+	if errJSON != nil {
+		log.Print(errJSON)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
