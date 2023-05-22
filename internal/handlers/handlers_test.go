@@ -142,7 +142,7 @@ func TestAPIShortenURL(t *testing.T) {
 			}
 			body, _ := json.Marshal(jsonBody)
 
-			request := httptest.NewRequest(http.MethodPost, "/api/short", bytes.NewReader(body))
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
