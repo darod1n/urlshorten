@@ -27,8 +27,8 @@ func main() {
 	router.With(logger.WithLoggin).Post("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ShortURL(serverConfig.ServerHost, db, w, r)
 	})
-	router.With(logger.WithLoggin).Post("/api/short", func(w http.ResponseWriter, r *http.Request) {
-		handlers.APIShortenURL(db, serverConfig.ServerHost, w, r)
+	router.With(logger.WithLoggin).Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r)
 	})
 
 	http.Handle("/", router)
