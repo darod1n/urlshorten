@@ -128,7 +128,7 @@ func TestAPIShortenURL(t *testing.T) {
 		{
 			name: "positive test #1",
 			want: want{
-				code: 200,
+				code: http.StatusOK,
 			},
 			testURL: "https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter",
 		},
@@ -142,12 +142,12 @@ func TestAPIShortenURL(t *testing.T) {
 			}
 			body, _ := json.Marshal(jsonBody)
 
-			request := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+			request := httptest.NewRequest(http.MethodPost, "/api/short", bytes.NewReader(body))
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
-			ShortURL(serverHost, db, w, request)
+			APIShortenURL(serverHost, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()
