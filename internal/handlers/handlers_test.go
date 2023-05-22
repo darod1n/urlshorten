@@ -128,7 +128,7 @@ func TestAPIShortenURL(t *testing.T) {
 		{
 			name: "positive test #1",
 			want: want{
-				code: http.StatusOK,
+				code: 201,
 			},
 			testURL: "https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter",
 		},
