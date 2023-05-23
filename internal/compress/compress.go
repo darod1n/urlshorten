@@ -3,6 +3,7 @@ package compress
 import (
 	"compress/gzip"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -31,7 +32,8 @@ func WithCompress(h http.Handler) http.Handler {
 		}
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
-
+			log.Print(err)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 

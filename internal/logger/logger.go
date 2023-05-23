@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"net/http"
 	"time"
 
@@ -73,6 +74,7 @@ func WithLoggin(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, res)
 
 		duration := time.Since(start)
+		body, _ := io.ReadAll(res.Body)
 
 		Sugar.Infoln(
 			"uri", uri,
@@ -80,6 +82,13 @@ func WithLoggin(h http.Handler) http.Handler {
 			"status", responseData.status, // получаем перехваченный код статуса ответа
 			"duration", duration,
 			"size", responseData.size, // получаем перехваченный размер ответа
+		)
+
+		Sugar.Infoln(
+			"uri", uri,
+			"method", method,
+			"status", responseData.status,
+			"body", body,
 		)
 	})
 
