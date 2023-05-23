@@ -25,11 +25,10 @@ func WithCompress(h http.Handler) http.Handler {
 			return
 		}
 
-		if r.Header.Get("") != "gzip" {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
 			return
 		}
-
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
 
