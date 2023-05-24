@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -76,7 +77,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	fmt.Println(d, d.URL)
 	shortURL := helpers.GenerateShortURL(6)
 	db.AddURL(d.URL, shortURL)
 
