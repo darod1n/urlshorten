@@ -20,12 +20,10 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 func WithCompress(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		contentType := r.Header.Get("Content-Type")
-
 		if !strings.Contains(contentType, "application/json") && !strings.Contains(contentType, "text/html") {
 			h.ServeHTTP(w, r)
 			return
 		}
-
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			h.ServeHTTP(w, r)
 			return

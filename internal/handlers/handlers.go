@@ -17,7 +17,7 @@ type Storage interface {
 }
 
 type data struct {
-	URL string `json:"url"`
+	URL string `json:"uri"`
 }
 type result struct {
 	Result string `json:"result"`
@@ -79,14 +79,15 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 
 	shortURL := helpers.GenerateShortURL(6)
 	db.AddURL(d.URL, shortURL)
+
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 	if errURL != nil {
 		log.Print(errURL)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	result.Result = resultURL
 
+	result.Result = resultURL
 	ans, errJSON := json.Marshal(result)
 	if errJSON != nil {
 		log.Print(errJSON)
