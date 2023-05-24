@@ -21,15 +21,15 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Use(compress.WithCompress)
-	router.With(logger.WithLoggin).Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
+	router.Use(logger.WithLoggin)
+	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
 		handlers.GetBigURL(shortURL, db, w, r)
 	})
-	router.With(logger.WithLoggin).Post("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ShortURL(serverConfig.ServerHost, db, w, r)
 	})
-	router.With(logger.WithLoggin).Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+	router.With(compress.WithCompress).Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r)
 	})
 

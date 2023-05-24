@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -18,7 +17,7 @@ type Storage interface {
 }
 
 type data struct {
-	URL string `json:"url"`
+	URL string `json:"uri"`
 }
 type result struct {
 	Result string `json:"result"`
@@ -77,9 +76,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	fmt.Println(d, d.URL)
 	shortURL := helpers.GenerateShortURL(6)
-	fmt.Println(shortURL)
 	db.AddURL(d.URL, shortURL)
 
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
