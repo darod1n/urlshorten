@@ -17,7 +17,7 @@ type Storage interface {
 }
 
 type data struct {
-	URL string `json:"uri"`
+	URL string `json:"url"`
 }
 type result struct {
 	Result string `json:"result"`
