@@ -79,6 +79,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	}
 	fmt.Println(d, d.URL)
 	shortURL := helpers.GenerateShortURL(6)
+	fmt.Println(shortURL)
 	db.AddURL(d.URL, shortURL)
 
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
