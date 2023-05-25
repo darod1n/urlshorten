@@ -1,8 +1,9 @@
-package compress
+package compressed
 
 import (
 	"compress/gzip"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -21,6 +22,7 @@ func (gz *gzipWriter) Header() http.Header {
 }
 
 func (gz *gzipWriter) WriteHeader(statusCode int) {
+
 	if statusCode < 300 {
 		gz.w.Header().Set("Content-Encoding", "gzip")
 
@@ -42,6 +44,7 @@ type gzipReader struct {
 }
 
 func newGzipReader(r io.ReadCloser) (*gzipReader, error) {
+
 	zr, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
@@ -50,15 +53,15 @@ func newGzipReader(r io.ReadCloser) (*gzipReader, error) {
 	return &gzipReader{r: r, zr: zr}, nil
 }
 
-func (gz gzipReader) Close() error {
+func (gz *gzipReader) Close() error {
 	if err := gz.r.Close(); err != nil {
 		return err
 	}
 	return gz.zr.Close()
 }
 
-func (gz *gzipReader) Read(b []byte) (n int, err error) {
-	return gz.zr.Read(b)
+func (gz gzipReader) Read(p []byte) (n int, err error) {
+	return gz.zr.Read(p)
 }
 
 func WithCompress(h http.Handler) http.Handler {
@@ -66,10 +69,11 @@ func WithCompress(h http.Handler) http.Handler {
 		ow := w
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
-		supportGzip := strings.Contains(acceptEncoding, "gzip")
+		contentType := r.Header.Get("Content-Type")
+		supportGzip := strings.Contains(acceptEncoding, "gzip") && (strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html"))
 		if supportGzip {
 			gw := newGzipWriter(w)
-
+			ow.Header().Set("Content-Encoding", "gzip")
 			ow = gw
 
 			defer gw.Close()
@@ -77,12 +81,12 @@ func WithCompress(h http.Handler) http.Handler {
 		}
 
 		contentEncoding := r.Header.Get("Content-Encoding")
-		contentType := r.Header.Get("Content-Type")
 
-		sendsGzip := strings.Contains(contentEncoding, "gzip") && (strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html"))
+		sendsGzip := strings.Contains(contentEncoding, "gzip")
 		if sendsGzip {
 			gr, err := newGzipReader(r.Body)
 			if err != nil {
+				log.Println(err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}

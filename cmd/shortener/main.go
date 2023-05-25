@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/darod1n/urlshorten/internal/compress"
+	"github.com/darod1n/urlshorten/internal/compressed"
 	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/handlers"
 	"github.com/darod1n/urlshorten/internal/logger"
@@ -22,6 +22,7 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(logger.WithLoggin)
+	router.Use(compressed.WithCompress)
 	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
 		handlers.GetBigURL(shortURL, db, w, r)
@@ -29,7 +30,7 @@ func main() {
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.ShortURL(serverConfig.ServerHost, db, w, r)
 	})
-	router.With(compress.WithCompress).Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r)
 	})
 
