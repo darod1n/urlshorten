@@ -1,4 +1,4 @@
-package compressed
+package compression
 
 import (
 	"compress/gzip"
