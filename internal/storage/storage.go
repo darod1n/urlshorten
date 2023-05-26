@@ -1,6 +1,9 @@
 package storage
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type DB struct {
 	urls map[string]string
@@ -21,5 +24,6 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB() *DB {
+	fmt.Println(path)
 	return &DB{urls: map[string]string{}, mu: &sync.Mutex{}}
 }
