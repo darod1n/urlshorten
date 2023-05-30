@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bufio"
 	"encoding/json"
 	"os"
 )
@@ -12,7 +13,8 @@ type Event struct {
 }
 
 type Producer struct {
-	file *os.File // файл для записи
+	file   *os.File // файл для записи
+	writer *bufio.Writer
 }
 
 func NewProducer(filename string) (*Producer, error) {
@@ -22,7 +24,10 @@ func NewProducer(filename string) (*Producer, error) {
 		return nil, err
 	}
 
-	return &Producer{file: file}, nil
+	return &Producer{
+		file:   file,
+		writer: bufio.NewWriter(file),
+	}, nil
 }
 
 func (p *Producer) Close() error {
@@ -35,11 +40,18 @@ func (p *Producer) WriteEvent(event *Event) error {
 	if err != nil {
 		return err
 	}
-	// добавляем перенос строки
-	data = append(data, '\n')
 
-	_, err = p.file.Write(data)
-	return err
+	if _, err := p.writer.Write(data); err != nil {
+		return err
+	}
+
+	// добавляем перенос строки
+
+	if err := p.writer.WriteByte('\n'); err != nil {
+		return err
+	}
+
+	return p.writer.Flush()
 }
 
 type Consumer struct {
