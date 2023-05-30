@@ -95,14 +95,14 @@ func (c *Consumer) ReadEvent() ([]Event, error) {
 }
 
 func (c *Consumer) GetMap() map[string]string {
-	t := make(map[string]string)
+	em := make(map[string]string)
 	events, err := c.ReadEvent()
 	if err != nil {
 		log.Println(err)
 	}
 
 	for _, event := range events {
-		t[event.ShortURL] = event.OriginalURL
+		em[event.ShortURL] = event.OriginalURL
 	}
-	return t
+	return em
 }
