@@ -3,6 +3,7 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
+	"log"
 	"os"
 )
 
@@ -11,6 +12,8 @@ type Event struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+type Events []Event
 
 type Producer struct {
 	file   *os.File // файл для записи
@@ -45,8 +48,6 @@ func (p *Producer) WriteEvent(event *Event) error {
 		return err
 	}
 
-	// добавляем перенос строки
-
 	if err := p.writer.WriteByte('\n'); err != nil {
 		return err
 	}
@@ -55,7 +56,8 @@ func (p *Producer) WriteEvent(event *Event) error {
 }
 
 type Consumer struct {
-	file *os.File // файл для чтения
+	file    *os.File // файл для чтения
+	scanner *bufio.Scanner
 }
 
 func NewConsumer(filename string) (*Consumer, error) {
@@ -65,14 +67,42 @@ func NewConsumer(filename string) (*Consumer, error) {
 		return nil, err
 	}
 
-	return &Consumer{file: file}, nil
+	return &Consumer{
+		file:    file,
+		scanner: bufio.NewScanner(file),
+	}, nil
 }
 
 func (c *Consumer) Close() error {
-	// закрываем файл
 	return c.file.Close()
 }
 
+func (c *Consumer) ReadEvent() ([]Event, error) {
+	var data []byte
+	events := []Event{}
+	event := Event{}
+
+	for c.scanner.Scan() {
+		data = c.scanner.Bytes()
+		err := json.Unmarshal(data, &event)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
 func (c *Consumer) GetMap() map[string]string {
-	return map[string]string{}
+	t := make(map[string]string)
+	events, err := c.ReadEvent()
+	if err != nil {
+		log.Println(err)
+	}
+
+	for _, event := range events {
+		t[event.ShortURL] = event.OriginalURL
+	}
+	return t
 }
