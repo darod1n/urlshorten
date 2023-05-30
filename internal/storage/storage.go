@@ -1,19 +1,27 @@
 package storage
 
 import (
-	"fmt"
+	"log"
 	"sync"
 )
 
 type DB struct {
 	urls map[string]string
 	mu   *sync.Mutex
+	p    *Producer
+	c    *Consumer
 }
 
 func (db *DB) AddURL(url string, shortURL string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
+	event := Event{
+		ID:          len(db.urls),
+		ShortURL:    shortURL,
+		OriginalURL: url,
+	}
+	db.p.WriteEvent(&event)
 }
 
 func (db *DB) GetURL(shortURL string) (string, bool) {
@@ -24,6 +32,20 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB() *DB {
-	fmt.Println(path)
-	return &DB{urls: map[string]string{}, mu: &sync.Mutex{}}
+	p, errProducer := NewProducer(path)
+	if errProducer != nil {
+		log.Println(errProducer)
+	}
+
+	c, errConsumer := NewConsumer(path)
+	if errConsumer != nil {
+		log.Println(errConsumer)
+	}
+
+	return &DB{
+		urls: c.GetMap(),
+		mu:   &sync.Mutex{},
+		p:    p,
+		c:    c,
+	}
 }
