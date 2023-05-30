@@ -18,6 +18,9 @@ cmd/shortener/shortener
 # Dependency directories (remove the comment below to include it)
 vendor/
 
+# Temporary storage
+tmp/short-url-db.json
+
 # IDEs directories
 .idea
 .vscode
