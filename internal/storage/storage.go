@@ -32,6 +32,8 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB() *DB {
+	path := getPath()
+
 	p, errProducer := NewProducer(path)
 	if errProducer != nil {
 		log.Println(errProducer)

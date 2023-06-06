@@ -6,9 +6,8 @@ import (
 	"os"
 )
 
-var path string
-
-func init() {
+func getPath() string {
+	var path string
 
 	flag.StringVar(&path, "f", "/tmp/short-url-db.json", "File path")
 
@@ -24,4 +23,5 @@ func init() {
 		defer f.Close()
 	}
 
+	return path
 }
