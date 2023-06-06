@@ -68,6 +68,8 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	var buf bytes.Buffer
 	_, errBody := buf.ReadFrom(req.Body)
 	if errBody != nil {
+		log.Print(errBody)
+		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
