@@ -23,7 +23,6 @@ func (gz *gzipWriter) WriteHeader(statusCode int) {
 		gz.Header().Set("Content-Encoding", "gzip")
 
 	}
-	gz.WriteHeader(statusCode)
 }
 
 func (gz *gzipWriter) Write(b []byte) (int, error) {
