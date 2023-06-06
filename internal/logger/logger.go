@@ -56,8 +56,6 @@ func InitializeLoger() error {
 
 func WithLoggin(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, res *http.Request) {
-		start := time.Now()
-
 		responseData := &responseData{
 			status: 0,
 			size:   0,
@@ -70,8 +68,8 @@ func WithLoggin(h http.Handler) http.Handler {
 		uri := res.RequestURI
 		method := res.Method
 
+		start := time.Now()
 		h.ServeHTTP(&lw, res)
-
 		duration := time.Since(start)
 
 		Sugar.Infoln(
