@@ -15,7 +15,7 @@ func getPath() string {
 		path = fp
 	}
 
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Open(path); os.IsNotExist(err) {
 		f, err := os.Create(path)
 		if err != nil {
 			log.Println(err)
