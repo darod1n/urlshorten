@@ -140,7 +140,11 @@ func TestAPIShortenURL(t *testing.T) {
 			jsonBody := map[string]interface{}{
 				"url": test.testURL,
 			}
-			body, _ := json.Marshal(jsonBody)
+			body, err := json.Marshal(jsonBody)
+
+			if err != nil {
+				t.Errorf("JSON Body error: %s", err)
+			}
 
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
 
