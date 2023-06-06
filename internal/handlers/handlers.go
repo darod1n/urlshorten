@@ -62,9 +62,6 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 }
 
 func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
-	var d data
-	var result result
-
 	var buf bytes.Buffer
 	_, errBody := buf.ReadFrom(req.Body)
 	if errBody != nil {
@@ -73,11 +70,13 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
+	var d data
 	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
 		log.Print(err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	shortURL := helpers.GenerateShortURL(6)
 	db.AddURL(d.URL, shortURL)
 
@@ -88,6 +87,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
+	var result result
 	result.Result = resultURL
 	ans, errJSON := json.Marshal(result)
 	if errJSON != nil {
