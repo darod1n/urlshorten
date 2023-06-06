@@ -36,12 +36,12 @@ func NewDB() *DB {
 
 	p, errProducer := NewProducer(path)
 	if errProducer != nil {
-		log.Println(errProducer)
+		log.Fatal(errProducer)
 	}
 
 	c, errConsumer := NewConsumer(path)
 	if errConsumer != nil {
-		log.Println(errConsumer)
+		log.Fatal(errConsumer)
 	}
 
 	return &DB{
