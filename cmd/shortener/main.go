@@ -19,7 +19,7 @@ func main() {
 	}
 
 	serverConfig := config.NewConfig()
-	db, err := storage.NewDB()
+	db, err := storage.NewDB(l)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
@@ -34,10 +34,10 @@ func main() {
 		handlers.GetBigURL(shortURL, db, w, r)
 	})
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ShortURL(serverConfig.ServerHost, db, w, r)
+		handlers.ShortURL(serverConfig.ServerHost, db, w, r, l)
 	})
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
-		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r)
+		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
 	})
 
 	http.Handle("/", router)
@@ -49,6 +49,6 @@ func main() {
 
 	errServer := http.ListenAndServe(serverConfig.Addr, nil)
 	if errServer != nil {
-		log.Fatal(errServer)
+		l.Fatalf("failed to start server^ %v", errServer)
 	}
 }

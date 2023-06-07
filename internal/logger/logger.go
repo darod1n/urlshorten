@@ -50,7 +50,7 @@ func InitializeLoger() (*zap.SugaredLogger, error) {
 	return logger.Sugar(), nil
 }
 
-func WithLoggin(h http.Handler, logger *zap.SugaredLogger) http.Handler {
+func WithLoggin(h http.Handler, l *zap.SugaredLogger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, res *http.Request) {
 		responseData := &responseData{
 			status: 0,
@@ -68,7 +68,7 @@ func WithLoggin(h http.Handler, logger *zap.SugaredLogger) http.Handler {
 		h.ServeHTTP(&lw, res)
 		duration := time.Since(start)
 
-		logger.Infoln(
+		l.Infoln(
 			"uri", uri,
 			"method", method,
 			"status", responseData.status, // получаем перехваченный код статуса ответа

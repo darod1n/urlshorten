@@ -3,8 +3,9 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
-	"log"
 	"os"
+
+	"go.uber.org/zap"
 )
 
 type Event struct {
@@ -58,9 +59,10 @@ func (p *Producer) WriteEvent(event *Event) error {
 type Consumer struct {
 	file    *os.File // файл для чтения
 	scanner *bufio.Scanner
+	l       *zap.SugaredLogger
 }
 
-func NewConsumer(filename string) (*Consumer, error) {
+func NewConsumer(filename string, l *zap.SugaredLogger) (*Consumer, error) {
 	// открываем файл для чтения
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -70,6 +72,7 @@ func NewConsumer(filename string) (*Consumer, error) {
 	return &Consumer{
 		file:    file,
 		scanner: bufio.NewScanner(file),
+		l:       l,
 	}, nil
 }
 
@@ -86,6 +89,7 @@ func (c *Consumer) ReadEvent() ([]Event, error) {
 		data = c.scanner.Bytes()
 		err := json.Unmarshal(data, &event)
 		if err != nil {
+			c.l.Errorf("failed to unmarshal: %v", err)
 			return nil, err
 		}
 		events = append(events, event)
@@ -98,7 +102,7 @@ func (c *Consumer) GetMap() map[string]string {
 	em := make(map[string]string)
 	events, err := c.ReadEvent()
 	if err != nil {
-		log.Println(err)
+		c.l.Errorf("failed to read event: %v", err)
 	}
 
 	for _, event := range events {

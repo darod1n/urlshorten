@@ -2,6 +2,8 @@ package storage
 
 import (
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 type DB struct {
@@ -11,7 +13,7 @@ type DB struct {
 	c    *Consumer
 }
 
-func (db *DB) AddURL(url string, shortURL string) {
+func (db *DB) AddURL(url string, shortURL string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
@@ -20,7 +22,11 @@ func (db *DB) AddURL(url string, shortURL string) {
 		ShortURL:    shortURL,
 		OriginalURL: url,
 	}
-	db.p.WriteEvent(&event)
+	err := db.p.WriteEvent(&event)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (db *DB) GetURL(shortURL string) (string, bool) {
@@ -30,7 +36,7 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB() (*DB, error) {
+func NewDB(l *zap.SugaredLogger) (*DB, error) {
 	path, err := getPath()
 	if err != nil {
 		return nil, err
@@ -41,7 +47,7 @@ func NewDB() (*DB, error) {
 		return nil, errProducer
 	}
 
-	c, errConsumer := NewConsumer(path)
+	c, errConsumer := NewConsumer(path, l)
 	if errConsumer != nil {
 		return nil, errConsumer
 	}
