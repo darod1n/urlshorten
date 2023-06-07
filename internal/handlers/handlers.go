@@ -36,7 +36,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 	shortURL := helpers.GenerateShortURL(6)
 	errAddURL := db.AddURL(string(body), shortURL)
-	if err != nil {
+	if errAddURL != nil {
 		l.Errorf("failed to add url: %v", errAddURL)
 		res.WriteHeader((http.StatusBadRequest))
 		return
