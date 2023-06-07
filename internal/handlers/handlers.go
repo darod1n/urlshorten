@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -12,8 +11,12 @@ import (
 )
 
 type Storage interface {
-	AddURL(url string, shortURL string)
+	AddURL(url string, shortURL string) error
 	GetURL(shortURL string) (string, bool)
+}
+
+type logger interface {
+	Errorf(template string, args ...interface{})
 }
 
 type data struct {
@@ -23,29 +26,34 @@ type result struct {
 	Result string `json:"result"`
 }
 
-func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
-	body, errBody := io.ReadAll(req.Body)
-	if errBody != nil {
-		log.Print(errBody)
+func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		l.Errorf("failed to read body: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	shortURL := helpers.GenerateShortURL(6)
-	db.AddURL(string(body), shortURL)
+	errAddURL := db.AddURL(string(body), shortURL)
+	if err != nil {
+		l.Errorf("failed to add url: %v", errAddURL)
+		res.WriteHeader((http.StatusBadRequest))
+		return
+	}
 
 	res.WriteHeader(http.StatusCreated)
 
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 
 	if errURL != nil {
-		log.Print(errURL)
+		l.Errorf("failed to join path: %v", errURL)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if _, errWrite := res.Write([]byte(resultURL)); errWrite != nil {
-		log.Print(errWrite)
+		l.Errorf("failed to write byte: %v", errURL)
 		res.WriteHeader(http.StatusBadRequest)
 	}
 }
@@ -61,18 +69,18 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request) {
+func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	var buf bytes.Buffer
 	_, errBody := buf.ReadFrom(req.Body)
 	if errBody != nil {
-		log.Printf("failed to read body: %v", errBody)
+		l.Errorf("failed to read body: %v", errBody)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var d data
 	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
-		log.Printf("failed to unmarshal the request body: %v", err)
+		l.Errorf("failed to unmarshal the request body: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -82,7 +90,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 	if errURL != nil {
-		log.Printf("failed to join path: %v", errURL)
+		l.Errorf("failed to join path: %v", errURL)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -91,7 +99,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	result.Result = resultURL
 	ans, errJSON := json.Marshal(result)
 	if errJSON != nil {
-		log.Printf("failed to marshal result: %v", errJSON)
+		l.Errorf("failed to marshal result: %v", errJSON)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
