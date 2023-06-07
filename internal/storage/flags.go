@@ -2,11 +2,10 @@ package storage
 
 import (
 	"flag"
-	"log"
 	"os"
 )
 
-func getPath() string {
+func getPath() (string, error) {
 	var path string
 
 	flag.StringVar(&path, "f", "/tmp/short-url-db.json", "File path")
@@ -18,10 +17,10 @@ func getPath() string {
 	if _, err := os.Open(path); os.IsNotExist(err) {
 		f, err := os.Create(path)
 		if err != nil {
-			log.Println(err)
+			return "", err
 		}
 		defer f.Close()
 	}
 
-	return path
+	return path, nil
 }
