@@ -15,8 +15,9 @@ type MockDB struct {
 	urls map[string]string
 }
 
-func (db *MockDB) AddURL(url string, shortURL string) {
+func (db *MockDB) AddURL(url string, shortURL string) error {
 	db.urls[shortURL] = url
+	return nil
 }
 
 func (db *MockDB) GetURL(shortURL string) (string, bool) {
@@ -52,7 +53,7 @@ func TestShortURL(t *testing.T) {
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
-			ShortURL(serverHost, db, w, request)
+			ShortURL(serverHost, db, w, request, t)
 
 			res := w.Result()
 			defer res.Body.Close()
@@ -101,7 +102,10 @@ func TestGetBigURL(t *testing.T) {
 			db := &MockDB{urls: map[string]string{}}
 
 			if test.addToken {
-				db.AddURL(test.want.location, test.testToken)
+				err := db.AddURL(test.want.location, test.testToken)
+				if err != nil {
+					t.Errorf("failed to add url: %v", err)
+				}
 			}
 
 			GetBigURL(test.testToken, db, w, request)
@@ -151,7 +155,7 @@ func TestAPIShortenURL(t *testing.T) {
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
-			APIShortenURL(serverHost, db, w, request)
+			APIShortenURL(serverHost, db, w, request, t)
 
 			res := w.Result()
 			defer res.Body.Close()
