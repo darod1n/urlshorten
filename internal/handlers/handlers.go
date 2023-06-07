@@ -65,14 +65,14 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	var buf bytes.Buffer
 	_, errBody := buf.ReadFrom(req.Body)
 	if errBody != nil {
-		log.Print(errBody)
+		log.Printf("failed to read body: %v", errBody)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var d data
 	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
-		log.Print(err)
+		log.Printf("failed to unmarshal the request body: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -82,7 +82,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 
 	resultURL, errURL := url.JoinPath(serverHost, shortURL)
 	if errURL != nil {
-		log.Print(errURL)
+		log.Printf("failed to join path: %v", errURL)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -91,7 +91,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	result.Result = resultURL
 	ans, errJSON := json.Marshal(result)
 	if errJSON != nil {
-		log.Print(errJSON)
+		log.Printf("failed to marshal result: %v", errJSON)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
