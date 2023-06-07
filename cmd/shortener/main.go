@@ -19,7 +19,7 @@ func main() {
 
 	l, err := logger.InitializeLoger()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create logger: %v", err)
 	}
 
 	router := chi.NewRouter()
