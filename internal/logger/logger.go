@@ -40,21 +40,19 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode // захватываем код статуса
 }
 
-var Sugar zap.SugaredLogger
-
-func InitializeLoger() error {
+func InitializeLoger() (*zap.SugaredLogger, error) {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer logger.Sync()
 
 	// делаем регистратор SugaredLogger
-	Sugar = *logger.Sugar()
-	return nil
+
+	return logger.Sugar(), nil
 }
 
-func WithLoggin(h http.Handler) http.Handler {
+func WithLoggin(h http.Handler, logger *zap.SugaredLogger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, res *http.Request) {
 		responseData := &responseData{
 			status: 0,
@@ -72,7 +70,7 @@ func WithLoggin(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, res)
 		duration := time.Since(start)
 
-		Sugar.Infoln(
+		logger.Infoln(
 			"uri", uri,
 			"method", method,
 			"status", responseData.status, // получаем перехваченный код статуса ответа
