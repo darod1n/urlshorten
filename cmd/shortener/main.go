@@ -16,12 +16,16 @@ func main() {
 
 	serverConfig := config.NewConfig()
 	db := storage.NewDB()
-	if err := logger.InitializeLoger(); err != nil {
+
+	l, err := logger.InitializeLoger()
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	router := chi.NewRouter()
-	router.Use(logger.WithLoggin)
+	router.Use(func(h http.Handler) http.Handler {
+		return logger.WithLoggin(h, l)
+	})
 	router.Use(compression.WithCompress)
 	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
@@ -36,7 +40,7 @@ func main() {
 
 	http.Handle("/", router)
 
-	logger.Sugar.Infow(
+	l.Infow(
 		"Starting server",
 		"Addr", serverConfig.Addr,
 	)
