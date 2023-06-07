@@ -13,13 +13,15 @@ import (
 )
 
 func main() {
-
-	serverConfig := config.NewConfig()
-	db := storage.NewDB()
-
 	l, err := logger.InitializeLoger()
 	if err != nil {
 		log.Fatalf("failed to create logger: %v", err)
+	}
+
+	serverConfig := config.NewConfig()
+	db, err := storage.NewDB()
+	if err != nil {
+		l.Fatalf("failed to create DB: %v", err)
 	}
 
 	router := chi.NewRouter()

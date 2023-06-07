@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"sync"
 )
 
@@ -31,17 +30,17 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB() *DB {
+func NewDB() (*DB, error) {
 	path := getPath()
 
 	p, errProducer := NewProducer(path)
 	if errProducer != nil {
-		log.Fatal(errProducer)
+		return nil, errProducer
 	}
 
 	c, errConsumer := NewConsumer(path)
 	if errConsumer != nil {
-		log.Fatal(errConsumer)
+		return nil, errConsumer
 	}
 
 	return &DB{
@@ -49,5 +48,5 @@ func NewDB() *DB {
 		mu:   &sync.Mutex{},
 		p:    p,
 		c:    c,
-	}
+	}, nil
 }
