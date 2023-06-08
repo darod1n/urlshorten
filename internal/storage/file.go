@@ -92,6 +92,7 @@ func (c *consumer) ReadEvent() ([]event, error) {
 
 func (c *consumer) GetMap() (map[string]string, error) {
 	em := make(map[string]string)
+
 	events, err := c.ReadEvent()
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 
 type DB struct {
 	urls map[string]string
+	path string
 	mu   *sync.Mutex
 	p    *producer
 	c    *consumer
@@ -15,6 +16,10 @@ func (db *DB) AddURL(url string, shortURL string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
+
+	if db.path == "" {
+		return nil
+	}
 
 	event := event{
 		ID:          len(db.urls),
@@ -37,6 +42,14 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB(path string) (*DB, error) {
+	if path == "" {
+		return &DB{
+			urls: make(map[string]string),
+			mu:   &sync.Mutex{},
+			path: path,
+		}, nil
+	}
+
 	p, err := newProducer(path)
 	if err != nil {
 		return nil, err
@@ -55,6 +68,7 @@ func NewDB(path string) (*DB, error) {
 	return &DB{
 		urls: urls,
 		mu:   &sync.Mutex{},
+		path: path,
 		p:    p,
 		c:    c,
 	}, nil
