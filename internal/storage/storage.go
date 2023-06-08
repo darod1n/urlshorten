@@ -36,12 +36,7 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB(l *zap.SugaredLogger) (*DB, error) {
-	path, err := getPath()
-	if err != nil {
-		return nil, err
-	}
-
+func NewDB(l *zap.SugaredLogger, path string) (*DB, error) {
 	p, errProducer := NewProducer(path)
 	if errProducer != nil {
 		return nil, errProducer

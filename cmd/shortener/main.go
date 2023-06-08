@@ -20,7 +20,7 @@ func main() {
 	defer l.Sync()
 
 	serverConfig := config.NewConfig()
-	db, err := storage.NewDB(l)
+	db, err := storage.NewDB(l, serverConfig.Path)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
