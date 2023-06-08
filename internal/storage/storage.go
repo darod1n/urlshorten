@@ -9,8 +9,8 @@ import (
 type DB struct {
 	urls map[string]string
 	mu   *sync.Mutex
-	p    *Producer
-	c    *Consumer
+	p    *producer
+	c    *consumer
 }
 
 func (db *DB) AddURL(url string, shortURL string) error {

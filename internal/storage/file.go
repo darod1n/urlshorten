@@ -16,30 +16,30 @@ type Event struct {
 
 type Events []Event
 
-type Producer struct {
+type producer struct {
 	file   *os.File // файл для записи
 	writer *bufio.Writer
 }
 
-func NewProducer(filename string) (*Producer, error) {
+func NewProducer(filename string) (*producer, error) {
 	// открываем файл для записи в конец
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Producer{
+	return &producer{
 		file:   file,
 		writer: bufio.NewWriter(file),
 	}, nil
 }
 
-func (p *Producer) Close() error {
+func (p *producer) Close() error {
 	// закрываем файл
 	return p.file.Close()
 }
 
-func (p *Producer) WriteEvent(event *Event) error {
+func (p *producer) WriteEvent(event *Event) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
 		return err
@@ -56,31 +56,31 @@ func (p *Producer) WriteEvent(event *Event) error {
 	return p.writer.Flush()
 }
 
-type Consumer struct {
+type consumer struct {
 	file    *os.File // файл для чтения
 	scanner *bufio.Scanner
 	l       *zap.SugaredLogger
 }
 
-func NewConsumer(filename string, l *zap.SugaredLogger) (*Consumer, error) {
+func NewConsumer(filename string, l *zap.SugaredLogger) (*consumer, error) {
 	// открываем файл для чтения
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Consumer{
+	return &consumer{
 		file:    file,
 		scanner: bufio.NewScanner(file),
 		l:       l,
 	}, nil
 }
 
-func (c *Consumer) Close() error {
+func (c *consumer) Close() error {
 	return c.file.Close()
 }
 
-func (c *Consumer) ReadEvent() ([]Event, error) {
+func (c *consumer) ReadEvent() ([]Event, error) {
 	var data []byte
 	events := []Event{}
 	event := Event{}
@@ -98,7 +98,7 @@ func (c *Consumer) ReadEvent() ([]Event, error) {
 	return events, nil
 }
 
-func (c *Consumer) GetMap() map[string]string {
+func (c *consumer) GetMap() map[string]string {
 	em := make(map[string]string)
 	events, err := c.ReadEvent()
 	if err != nil {
