@@ -17,9 +17,9 @@ func (db *DB) AddURL(url string, shortURL string) error {
 	db.urls[shortURL] = url
 
 	event := event{
-		id:          len(db.urls),
-		shortURL:    shortURL,
-		originalURL: url,
+		ID:          len(db.urls),
+		ShortURL:    shortURL,
+		OriginalURL: url,
 	}
 
 	err := db.p.WriteEvent(&event)

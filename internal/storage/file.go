@@ -7,9 +7,9 @@ import (
 )
 
 type event struct {
-	id          int    `json:"uuid"`
-	shortURL    string `json:"short_url"`
-	originalURL string `json:"original_url"`
+	ID          int    `json:"uuid"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type producer struct {
@@ -23,7 +23,6 @@ func newProducer(filename string) (*producer, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &producer{
 		file:   file,
 		writer: bufio.NewWriter(file),
@@ -99,7 +98,7 @@ func (c *consumer) GetMap() (map[string]string, error) {
 	}
 
 	for _, event := range events {
-		em[event.shortURL] = event.originalURL
+		em[event.ShortURL] = event.OriginalURL
 	}
 	return em, nil
 }
