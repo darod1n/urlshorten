@@ -16,10 +16,10 @@ func (db *DB) AddURL(url string, shortURL string) error {
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
 
-	event := Event{
-		ID:          len(db.urls),
-		ShortURL:    shortURL,
-		OriginalURL: url,
+	event := event{
+		id:          len(db.urls),
+		shortURL:    shortURL,
+		originalURL: url,
 	}
 
 	err := db.p.WriteEvent(&event)

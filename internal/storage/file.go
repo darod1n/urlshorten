@@ -6,13 +6,11 @@ import (
 	"os"
 )
 
-type Event struct {
-	ID          int    `json:"uuid"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+type event struct {
+	id          int    `json:"uuid"`
+	shortURL    string `json:"short_url"`
+	originalURL string `json:"original_url"`
 }
-
-type Events []Event
 
 type producer struct {
 	file   *os.File // файл для записи
@@ -37,7 +35,7 @@ func (p *producer) Close() error {
 	return p.file.Close()
 }
 
-func (p *producer) WriteEvent(event *Event) error {
+func (p *producer) WriteEvent(event *event) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
 		return err
@@ -76,10 +74,10 @@ func (c *consumer) Close() error {
 	return c.file.Close()
 }
 
-func (c *consumer) ReadEvent() ([]Event, error) {
+func (c *consumer) ReadEvent() ([]event, error) {
 	var data []byte
-	events := []Event{}
-	event := Event{}
+	events := []event{}
+	event := event{}
 
 	for c.scanner.Scan() {
 		data = c.scanner.Bytes()
@@ -101,7 +99,7 @@ func (c *consumer) GetMap() (map[string]string, error) {
 	}
 
 	for _, event := range events {
-		em[event.ShortURL] = event.OriginalURL
+		em[event.shortURL] = event.originalURL
 	}
 	return em, nil
 }
