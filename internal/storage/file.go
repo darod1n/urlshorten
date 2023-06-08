@@ -89,7 +89,6 @@ func (c *consumer) ReadEvent() ([]Event, error) {
 		data = c.scanner.Bytes()
 		err := json.Unmarshal(data, &event)
 		if err != nil {
-			c.l.Errorf("failed to unmarshal: %v", err)
 			return nil, err
 		}
 		events = append(events, event)
@@ -98,15 +97,15 @@ func (c *consumer) ReadEvent() ([]Event, error) {
 	return events, nil
 }
 
-func (c *consumer) GetMap() map[string]string {
+func (c *consumer) GetMap() (map[string]string, error) {
 	em := make(map[string]string)
 	events, err := c.ReadEvent()
 	if err != nil {
-		c.l.Errorf("failed to read event: %v", err)
+		return nil, err
 	}
 
 	for _, event := range events {
 		em[event.ShortURL] = event.OriginalURL
 	}
-	return em
+	return em, nil
 }

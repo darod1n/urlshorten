@@ -47,8 +47,13 @@ func NewDB(l *zap.SugaredLogger, path string) (*DB, error) {
 		return nil, err
 	}
 
+	urls, err := c.GetMap()
+	if err != nil {
+		return nil, err
+	}
+
 	return &DB{
-		urls: c.GetMap(),
+		urls: urls,
 		mu:   &sync.Mutex{},
 		p:    p,
 		c:    c,
