@@ -48,8 +48,7 @@ func main() {
 		"Addr", serverConfig.Addr,
 	)
 
-	errServer := http.ListenAndServe(serverConfig.Addr, nil)
-	if errServer != nil {
-		l.Fatalf("failed to start server^ %v", errServer)
+	if err := http.ListenAndServe(serverConfig.Addr, nil); err != nil {
+		l.Fatalf("failed to start server^ %v", err)
 	}
 }

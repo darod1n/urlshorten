@@ -37,14 +37,14 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB(l *zap.SugaredLogger, path string) (*DB, error) {
-	p, errProducer := NewProducer(path)
-	if errProducer != nil {
-		return nil, errProducer
+	p, err := NewProducer(path)
+	if err != nil {
+		return nil, err
 	}
 
-	c, errConsumer := NewConsumer(path, l)
-	if errConsumer != nil {
-		return nil, errConsumer
+	c, err := NewConsumer(path, l)
+	if err != nil {
+		return nil, err
 	}
 
 	return &DB{
