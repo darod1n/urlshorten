@@ -45,7 +45,6 @@ func InitializeLoger() (*zap.SugaredLogger, error) {
 	if err != nil {
 		return nil, err
 	}
-	//defer logger.Sync()
 
 	return logger.Sugar(), nil
 }
