@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
-
-	"go.uber.org/zap"
 )
 
 type Event struct {
@@ -59,10 +57,9 @@ func (p *producer) WriteEvent(event *Event) error {
 type consumer struct {
 	file    *os.File // файл для чтения
 	scanner *bufio.Scanner
-	l       *zap.SugaredLogger
 }
 
-func NewConsumer(filename string, l *zap.SugaredLogger) (*consumer, error) {
+func NewConsumer(filename string) (*consumer, error) {
 	// открываем файл для чтения
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
@@ -72,7 +69,6 @@ func NewConsumer(filename string, l *zap.SugaredLogger) (*consumer, error) {
 	return &consumer{
 		file:    file,
 		scanner: bufio.NewScanner(file),
-		l:       l,
 	}, nil
 }
 

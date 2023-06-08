@@ -2,8 +2,6 @@ package storage
 
 import (
 	"sync"
-
-	"go.uber.org/zap"
 )
 
 type DB struct {
@@ -36,13 +34,13 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB(l *zap.SugaredLogger, path string) (*DB, error) {
+func NewDB(path string) (*DB, error) {
 	p, err := NewProducer(path)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := NewConsumer(path, l)
+	c, err := NewConsumer(path)
 	if err != nil {
 		return nil, err
 	}

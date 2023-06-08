@@ -20,7 +20,7 @@ func main() {
 	defer l.Sync()
 
 	serverConfig := config.NewConfig()
-	db, err := storage.NewDB(l, serverConfig.Path)
+	db, err := storage.NewDB(serverConfig.Path)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
@@ -49,6 +49,6 @@ func main() {
 	)
 
 	if err := http.ListenAndServe(serverConfig.Addr, nil); err != nil {
-		l.Fatalf("failed to start server^ %v", err)
+		l.Fatalf("failed to start server: %v", err)
 	}
 }
