@@ -17,6 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create logger: %v", err)
 	}
+	defer l.Sync()
 
 	serverConfig := config.NewConfig()
 	db, err := storage.NewDB(l)
