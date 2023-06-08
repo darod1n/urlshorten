@@ -15,11 +15,13 @@ func (db *DB) AddURL(url string, shortURL string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
+
 	event := Event{
 		ID:          len(db.urls),
 		ShortURL:    shortURL,
 		OriginalURL: url,
 	}
+
 	err := db.p.WriteEvent(&event)
 	if err != nil {
 		return err
@@ -35,12 +37,12 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 }
 
 func NewDB(path string) (*DB, error) {
-	p, err := NewProducer(path)
+	p, err := newProducer(path)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := NewConsumer(path)
+	c, err := newConsumer(path)
 	if err != nil {
 		return nil, err
 	}

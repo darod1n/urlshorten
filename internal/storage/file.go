@@ -19,7 +19,7 @@ type producer struct {
 	writer *bufio.Writer
 }
 
-func NewProducer(filename string) (*producer, error) {
+func newProducer(filename string) (*producer, error) {
 	// открываем файл для записи в конец
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -59,7 +59,7 @@ type consumer struct {
 	scanner *bufio.Scanner
 }
 
-func NewConsumer(filename string) (*consumer, error) {
+func newConsumer(filename string) (*consumer, error) {
 	// открываем файл для чтения
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0666)
 	if err != nil {
