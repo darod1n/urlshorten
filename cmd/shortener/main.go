@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/darod1n/urlshorten/internal/compression"
 	"github.com/darod1n/urlshorten/internal/config"
@@ -21,8 +20,7 @@ func main() {
 	}
 	defer l.Sync()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	serverConfig := config.NewConfig()
 	db, err := storage.NewDB(serverConfig.Path, serverConfig.DriverName, serverConfig.DataSourceName)
