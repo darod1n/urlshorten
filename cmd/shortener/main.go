@@ -44,7 +44,7 @@ func main() {
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
 	})
-	router.Get("/Ping", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Ping(ctx, db, w, r, l)
 	})
 
