@@ -1,16 +1,37 @@
 package storage
 
-import "sync"
+import (
+	"sync"
+)
 
 type DB struct {
 	urls map[string]string
+	path string
 	mu   *sync.Mutex
+	p    *producer
+	c    *consumer
 }
 
-func (db *DB) AddURL(url string, shortURL string) {
+func (db *DB) AddURL(url string, shortURL string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	db.urls[shortURL] = url
+
+	if db.path == "" {
+		return nil
+	}
+
+	event := event{
+		ID:          len(db.urls),
+		ShortURL:    shortURL,
+		OriginalURL: url,
+	}
+
+	err := db.p.WriteEvent(&event)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (db *DB) GetURL(shortURL string) (string, bool) {
@@ -20,6 +41,35 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB() *DB {
-	return &DB{urls: map[string]string{}, mu: &sync.Mutex{}}
+func NewDB(path string) (*DB, error) {
+	if path == "" {
+		return &DB{
+			urls: make(map[string]string),
+			mu:   &sync.Mutex{},
+			path: path,
+		}, nil
+	}
+
+	p, err := newProducer(path)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := newConsumer(path)
+	if err != nil {
+		return nil, err
+	}
+
+	urls, err := c.GetMap()
+	if err != nil {
+		return nil, err
+	}
+
+	return &DB{
+		urls: urls,
+		mu:   &sync.Mutex{},
+		path: path,
+		p:    p,
+		c:    c,
+	}, nil
 }

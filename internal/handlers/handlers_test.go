@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,8 +15,9 @@ type MockDB struct {
 	urls map[string]string
 }
 
-func (db *MockDB) AddURL(url string, shortURL string) {
+func (db *MockDB) AddURL(url string, shortURL string) error {
 	db.urls[shortURL] = url
+	return nil
 }
 
 func (db *MockDB) GetURL(shortURL string) (string, bool) {
@@ -27,34 +30,35 @@ func TestShortURL(t *testing.T) {
 		code int
 	}
 	tests := []struct {
-		name string
-		want want
+		name    string
+		testURL string
+		want    want
 	}{
 		{
 			name: "postive test #1",
 			want: want{
 				code: 201,
 			},
+			testURL: `https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter`,
 		},
 	}
 
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
-			bodyReader := strings.NewReader(`https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter`)
+			bodyReader := strings.NewReader(test.testURL)
 
 			request := httptest.NewRequest(http.MethodPost, "/", bodyReader)
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
 			serverHost := "http://localhost:8080"
-			ShortURL(serverHost, db, w, request)
+			ShortURL(serverHost, db, w, request, t)
 
 			res := w.Result()
 			defer res.Body.Close()
 
 			assert.Equal(t, res.StatusCode, test.want.code)
-
 		})
 	}
 }
@@ -98,7 +102,10 @@ func TestGetBigURL(t *testing.T) {
 			db := &MockDB{urls: map[string]string{}}
 
 			if test.addToken {
-				db.AddURL(test.want.location, test.testToken)
+				err := db.AddURL(test.want.location, test.testToken)
+				if err != nil {
+					t.Errorf("failed to add url: %v", err)
+				}
 			}
 
 			GetBigURL(test.testToken, db, w, request)
@@ -108,6 +115,52 @@ func TestGetBigURL(t *testing.T) {
 
 			assert.Equal(t, res.StatusCode, test.want.code)
 
+		})
+	}
+}
+
+func TestAPIShortenURL(t *testing.T) {
+	type want struct {
+		code int
+	}
+	tests := []struct {
+		name    string
+		want    want
+		testURL string
+	}{
+
+		{
+			name: "positive test #1",
+			want: want{
+				code: 201,
+			},
+			testURL: "https://stackoverflow.com/questions/40096750/how-to-set-http-status-code-on-http-responsewriter",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			jsonBody := map[string]interface{}{
+				"url": test.testURL,
+			}
+			body, err := json.Marshal(jsonBody)
+
+			if err != nil {
+				t.Errorf("JSON Body error: %s", err)
+			}
+
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewReader(body))
+
+			w := httptest.NewRecorder()
+			db := &MockDB{urls: map[string]string{}}
+			serverHost := "http://localhost:8080"
+			APIShortenURL(serverHost, db, w, request, t)
+
+			res := w.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, res.StatusCode, test.want.code)
 		})
 	}
 }
