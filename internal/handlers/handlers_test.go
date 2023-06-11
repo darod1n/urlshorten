@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -23,6 +24,10 @@ func (db *MockDB) AddURL(url string, shortURL string) error {
 func (db *MockDB) GetURL(shortURL string) (string, bool) {
 	bigURL, ok := db.urls[shortURL]
 	return bigURL, ok
+}
+
+func (db *MockDB) PingContext(ctx context.Context) error {
+	return nil
 }
 
 func TestShortURL(t *testing.T) {
