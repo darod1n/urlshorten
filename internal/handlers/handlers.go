@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 type Storage interface {
 	AddURL(url string, shortURL string) error
 	GetURL(shortURL string) (string, bool)
+	PingContext(ctx context.Context) error
 }
 
 type logger interface {
@@ -107,4 +109,13 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusCreated)
 	res.Write(ans)
+}
+
+func Ping(ctx context.Context, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	if err := db.PingContext(ctx); err != nil {
+		l.Errorf("failed to ping database: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
 }
