@@ -1,7 +1,11 @@
 package storage
 
 import (
+	"context"
+	"database/sql"
 	"sync"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type DB struct {
@@ -10,6 +14,7 @@ type DB struct {
 	mu   *sync.Mutex
 	p    *producer
 	c    *consumer
+	base *sql.DB
 }
 
 func (db *DB) AddURL(url string, shortURL string) error {
@@ -41,7 +46,15 @@ func (db *DB) GetURL(shortURL string) (string, bool) {
 	return bigURL, ok
 }
 
-func NewDB(path string) (*DB, error) {
+func (db *DB) PingContext(ctx context.Context) error {
+	return db.base.PingContext(ctx)
+}
+
+func (db *DB) Close() error {
+	return db.base.Close()
+}
+
+func NewDB(path, driverName, dataSourceName string) (*DB, error) {
 	if path == "" {
 		return &DB{
 			urls: make(map[string]string),
@@ -65,11 +78,17 @@ func NewDB(path string) (*DB, error) {
 		return nil, err
 	}
 
+	base, err := sql.Open(driverName, dataSourceName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DB{
 		urls: urls,
 		mu:   &sync.Mutex{},
 		path: path,
 		p:    p,
 		c:    c,
+		base: base,
 	}, nil
 }
