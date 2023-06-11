@@ -6,9 +6,11 @@ import (
 )
 
 type Config struct {
-	Addr       string
-	ServerHost string
-	Path       string
+	Addr           string
+	ServerHost     string
+	Path           string
+	DriverName     string
+	DataSourceName string
 }
 
 func NewConfig() *Config {
@@ -16,14 +18,18 @@ func NewConfig() *Config {
 	config.Addr = os.Getenv("SERVER_ADDRESS")
 	config.ServerHost = os.Getenv("BASE_URL")
 	config.Path = os.Getenv("FILE_STORAGE_PATH")
+	config.DriverName = "pgx"
+	config.DataSourceName = os.Getenv("DATABASE_DSN")
 
 	var flagAddr string
 	var flagServerHost string
 	var flagPath string
+	var flagDataSourceName string
 
 	flag.StringVar(&flagAddr, "a", ":8080", "http-server address")
 	flag.StringVar(&flagServerHost, "b", "http://localhost:8080", "base address result short url")
 	flag.StringVar(&flagPath, "f", "/tmp/short-url-db.json", "File path")
+	flag.StringVar(&flagDataSourceName, "d", "host=localhost user=shortdb_user password=shortdbpassword dbname=shortdb sslmode=disable", "database data source name")
 	flag.Parse()
 
 	if config.Addr == "" {
@@ -36,6 +42,10 @@ func NewConfig() *Config {
 
 	if config.Path == "" {
 		config.Path = flagPath
+	}
+
+	if config.DataSourceName == "" {
+		config.DataSourceName = flagDataSourceName
 	}
 
 	return config
