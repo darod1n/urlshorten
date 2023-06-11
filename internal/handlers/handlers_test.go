@@ -12,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	serverHost = "http://localhost:8080"
+)
+
 type MockDB struct {
 	urls map[string]string
 }
@@ -57,7 +61,6 @@ func TestShortURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			serverHost := "http://localhost:8080"
 			ShortURL(serverHost, db, w, request, t)
 
 			res := w.Result()
@@ -159,7 +162,6 @@ func TestAPIShortenURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			serverHost := "http://localhost:8080"
 			APIShortenURL(serverHost, db, w, request, t)
 
 			res := w.Result()
