@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/darod1n/urlshorten/internal/compression"
 	"github.com/darod1n/urlshorten/internal/config"
@@ -20,14 +21,11 @@ func main() {
 	}
 	defer l.Sync()
 
-	ctx := context.Background()
-
 	serverConfig := config.NewConfig()
 	db, err := storage.NewDB(serverConfig.Path, serverConfig.DriverName, serverConfig.DataSourceName)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
-	defer db.Close()
 
 	router := chi.NewRouter()
 	router.Use(func(h http.Handler) http.Handler {
@@ -35,16 +33,22 @@ func main() {
 	})
 	router.Use(compression.WithCompress)
 	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
 		shortURL := chi.URLParam(r, "shortURL")
-		handlers.GetBigURL(shortURL, db, w, r)
+		handlers.GetBigURL(ctx, shortURL, db, w, r)
 	})
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		handlers.ShortURL(serverConfig.ServerHost, db, w, r, l)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
+		handlers.ShortURL(ctx, serverConfig.ServerHost, db, w, r, l)
 	})
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
 	})
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		defer cancel()
 		handlers.Ping(ctx, db, w, r, l)
 	})
 
