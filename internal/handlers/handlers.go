@@ -7,13 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/darod1n/urlshorten/internal/helpers"
 )
 
 type Storage interface {
-	AddURL(url string, shortURL string) error
-	GetURL(shortURL string) (string, bool)
+	AddURL(ctx context.Context, url string) (string, error)
+	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 }
 
@@ -28,7 +26,7 @@ type result struct {
 	Result string `json:"result"`
 }
 
-func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+func ShortURL(ctx context.Context, serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		l.Errorf("failed to read body: %v", err)
@@ -36,9 +34,9 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 		return
 	}
 
-	shortURL := helpers.GenerateShortURL(6)
+	shortURL, err := db.AddURL(ctx, string(body))
 
-	if err := db.AddURL(string(body), shortURL); err != nil {
+	if err != nil {
 		l.Errorf("failed to add url: %v", err)
 		res.WriteHeader((http.StatusBadRequest))
 		return
@@ -60,9 +58,9 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 	}
 }
 
-func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
-	bigURL, ok := db.GetURL(shortURL)
-	if !ok {
+func GetBigURL(ctx context.Context, shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
+	bigURL, err := db.GetURL(ctx, shortURL)
+	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -87,8 +85,14 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	shortURL := helpers.GenerateShortURL(6)
-	db.AddURL(d.URL, shortURL)
+	ctx := context.Background()
+
+	shortURL, err := db.AddURL(ctx, d.URL)
+	if err != nil {
+		l.Errorf("failed to add url: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	resultURL, err := url.JoinPath(serverHost, shortURL)
 	if err != nil {
