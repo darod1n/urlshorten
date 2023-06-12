@@ -28,8 +28,8 @@ func NewConfig() *Config {
 
 	flag.StringVar(&flagAddr, "a", ":8080", "http-server address")
 	flag.StringVar(&flagServerHost, "b", "http://localhost:8080", "base address result short url")
-	flag.StringVar(&flagPath, "f", "/tmp/short-url-db.json", "File path")
-	flag.StringVar(&flagDataSourceName, "d", "host=localhost user=shortdb_user password=shortdbpassword dbname=shortdb sslmode=disable", "database data source name")
+	flag.StringVar(&flagPath, "f", "", "File path")
+	flag.StringVar(&flagDataSourceName, "d", "", "database data source name")
 	flag.Parse()
 
 	if config.Addr == "" {
