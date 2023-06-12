@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,14 +22,18 @@ type MockDB struct {
 	urls map[string]string
 }
 
-func (db *MockDB) AddURL(url string, shortURL string) error {
+func (db *MockDB) AddURL(ctx context.Context, url string) (string, error) {
+	shortURL := helpers.GenerateShortURL(6)
 	db.urls[shortURL] = url
-	return nil
+	return shortURL, nil
 }
 
-func (db *MockDB) GetURL(shortURL string) (string, bool) {
+func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	bigURL, ok := db.urls[shortURL]
-	return bigURL, ok
+	if ok {
+		return bigURL, nil
+	}
+	return bigURL, errors.New("")
 }
 
 func (db *MockDB) PingContext(ctx context.Context) error {
@@ -61,7 +67,8 @@ func TestShortURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			ShortURL(serverHost, db, w, request, t)
+			ctx := context.Background()
+			ShortURL(ctx, serverHost, db, w, request, t)
 
 			res := w.Result()
 			defer res.Body.Close()
@@ -110,13 +117,11 @@ func TestGetBigURL(t *testing.T) {
 			db := &MockDB{urls: map[string]string{}}
 
 			if test.addToken {
-				err := db.AddURL(test.want.location, test.testToken)
-				if err != nil {
-					t.Errorf("failed to add url: %v", err)
-				}
+				db.urls[test.testToken] = test.want.location
 			}
 
-			GetBigURL(test.testToken, db, w, request)
+			ctx := context.Background()
+			GetBigURL(ctx, test.testToken, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()
