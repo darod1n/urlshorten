@@ -75,7 +75,7 @@ func createDB(ctx context.Context, db *sql.DB) error {
 	_, err := db.ExecContext(ctx, `
 	create table if not exists urls(
 		short_url text primary key,
-		original_url text
+		original_url text unique
 	);
 	
 	Create or replace function random_string() returns text as
@@ -124,8 +124,6 @@ func createDB(ctx context.Context, db *sql.DB) error {
 	$$ language 'plpgsql';
 	
 	CREATE OR REPLACE TRIGGER trigger_urls_genid BEFORE INSERT ON urls FOR EACH ROW EXECUTE PROCEDURE unique_short_id();
-
-	alter table urls add constraint uniq_constraint unique (original_url);
 	`)
 	if err != nil {
 		return err
