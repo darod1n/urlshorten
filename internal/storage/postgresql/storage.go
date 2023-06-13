@@ -3,6 +3,7 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/url"
 	"sync"
 
@@ -19,8 +20,15 @@ type DB struct {
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	row := db.base.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) returning short_url;", url)
+
 	var shortURL string
 	row.Scan(&shortURL)
+
+	if shortURL == "" {
+		row := db.base.QueryRowContext(ctx, "select short_url from urls where original_url=$1;", url)
+		row.Scan(&shortURL)
+		return shortURL, errors.New("Origin url is exist")
+	}
 	return shortURL, nil
 }
 
