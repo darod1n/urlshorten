@@ -41,9 +41,12 @@ func ShortURL(ctx context.Context, serverHost string, db Storage, res http.Respo
 	shortURL, err := db.AddURL(ctx, string(body))
 
 	if err != nil {
-		l.Errorf("failed to add url: %v", err)
-		res.WriteHeader((http.StatusBadRequest))
-		return
+		if shortURL == "" {
+			l.Errorf("failed to add url: %v", err)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		res.WriteHeader(http.StatusConflict)
 	}
 
 	res.WriteHeader(http.StatusCreated)
@@ -90,12 +93,15 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	}
 
 	ctx := context.Background()
-
+	var result result
 	shortURL, err := db.AddURL(ctx, d.URL)
 	if err != nil {
-		l.Errorf("failed to add url: %v", err)
-		res.WriteHeader(http.StatusBadRequest)
-		return
+		if shortURL == "" {
+			l.Errorf("failed to add url: %v", err)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		res.WriteHeader(http.StatusConflict)
 	}
 
 	resultURL, err := url.JoinPath(serverHost, shortURL)
@@ -105,7 +111,6 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	var result result
 	result.Result = resultURL
 	ans, err := json.Marshal(result)
 	if err != nil {
