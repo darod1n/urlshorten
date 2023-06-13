@@ -46,11 +46,11 @@ func (db *DB) Close() error {
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
 	var data []models.BatchResponse
 	for _, val := range batch {
-		shortURl, err := db.AddURL(ctx, val.OriginURL)
+		shortURL, err := db.AddURL(ctx, val.OriginURL)
 		if err != nil {
 			return nil, err
 		}
-		url, _ := url.JoinPath(host, shortURl)
+		url, _ := url.JoinPath(host, shortURL)
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	return data, nil
