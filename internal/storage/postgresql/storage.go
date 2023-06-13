@@ -19,7 +19,7 @@ type DB struct {
 }
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	row := db.base.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) returning short_url;", url)
+	row := db.base.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) on conflict (original_url) do nothing returning short_url;", url)
 
 	var shortURL string
 	row.Scan(&shortURL)
@@ -27,7 +27,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	if shortURL == "" {
 		row := db.base.QueryRowContext(ctx, "select short_url from urls where original_url=$1;", url)
 		row.Scan(&shortURL)
-		return shortURL, errors.New("Origin url is exist")
+		return shortURL, errors.New("origin url is exist")
 	}
 	return shortURL, nil
 }
@@ -124,6 +124,8 @@ func createDB(ctx context.Context, db *sql.DB) error {
 	$$ language 'plpgsql';
 	
 	CREATE OR REPLACE TRIGGER trigger_urls_genid BEFORE INSERT ON urls FOR EACH ROW EXECUTE PROCEDURE unique_short_id();
+
+	alter table urls add constraint uniq_constraint unique (original_url);
 	`)
 	if err != nil {
 		return err
