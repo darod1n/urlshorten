@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
+	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,6 +39,10 @@ func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, error) {
 
 func (db *MockDB) PingContext(ctx context.Context) error {
 	return nil
+}
+
+func (db *MockDB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+	return nil, nil
 }
 
 func TestShortURL(t *testing.T) {
