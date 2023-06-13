@@ -3,9 +3,11 @@ package file
 import (
 	"context"
 	"errors"
+	"net/url"
 	"sync"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
+	"github.com/darod1n/urlshorten/internal/models"
 )
 
 type DB struct {
@@ -51,6 +53,16 @@ func (db *DB) PingContext(ctx context.Context) error {
 
 func (db *DB) Close() error {
 	return nil
+}
+
+func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+	var data []models.BatchResponse
+	for _, val := range batch {
+		shortURl, _ := db.AddURL(ctx, val.OriginURL)
+		url, _ := url.JoinPath(host, shortURl)
+		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
+	}
+	return data, nil
 }
 
 func NewDB(path string) (*DB, error) {

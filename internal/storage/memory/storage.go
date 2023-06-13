@@ -3,9 +3,11 @@ package memory
 import (
 	"context"
 	"errors"
+	"net/url"
 	"sync"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
+	"github.com/darod1n/urlshorten/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -39,6 +41,19 @@ func (db *DB) PingContext(ctx context.Context) error {
 
 func (db *DB) Close() error {
 	return nil
+}
+
+func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+	var data []models.BatchResponse
+	for _, val := range batch {
+		shortURl, err := db.AddURL(ctx, val.OriginURL)
+		if err != nil {
+			return nil, err
+		}
+		url, _ := url.JoinPath(host, shortURl)
+		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
+	}
+	return data, nil
 }
 
 func NewDB() (*DB, error) {

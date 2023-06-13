@@ -3,8 +3,10 @@ package postgresql
 import (
 	"context"
 	"database/sql"
+	"net/url"
 	"sync"
 
+	"github.com/darod1n/urlshorten/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -37,6 +39,28 @@ func (db *DB) PingContext(ctx context.Context) error {
 
 func (db *DB) Close() error {
 	return db.base.Close()
+}
+
+func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+	tx, err := db.base.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	var data []models.BatchResponse
+	for _, val := range batch {
+		row := tx.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) returning short_url;", val.OriginURL)
+
+		var shortURL string
+		err := row.Scan(&shortURL)
+		if err != nil {
+			return nil, err
+		}
+
+		url, _ := url.JoinPath(host, shortURL)
+		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
+	}
+	return data, tx.Commit()
 }
 
 func createDB(ctx context.Context, db *sql.DB) error {
