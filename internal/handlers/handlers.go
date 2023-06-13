@@ -38,27 +38,24 @@ func ShortURL(ctx context.Context, serverHost string, db Storage, res http.Respo
 		return
 	}
 
+	status := http.StatusCreated
 	shortURL, err := db.AddURL(ctx, string(body))
-
 	if err != nil {
 		if shortURL == "" {
 			l.Errorf("failed to add url: %v", err)
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		res.WriteHeader(http.StatusConflict)
+		status = http.StatusConflict
 	}
 
-	res.WriteHeader(http.StatusCreated)
-
 	resultURL, err := url.JoinPath(serverHost, shortURL)
-
 	if err != nil {
 		l.Errorf("failed to join path: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
+	res.WriteHeader(status)
 	if _, err := res.Write([]byte(resultURL)); err != nil {
 		l.Errorf("failed to write byte: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
@@ -93,6 +90,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	}
 
 	ctx := context.Background()
+	status := http.StatusCreated
 	var result result
 	shortURL, err := db.AddURL(ctx, d.URL)
 	if err != nil {
@@ -101,7 +99,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		res.WriteHeader(http.StatusConflict)
+		status = http.StatusConflict
 	}
 
 	resultURL, err := url.JoinPath(serverHost, shortURL)
@@ -120,7 +118,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(status)
 	res.Write(ans)
 }
 
