@@ -46,6 +46,11 @@ func main() {
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
 	})
+
+	router.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Batch(serverConfig.ServerHost, db, w, r, l)
+	})
+
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
