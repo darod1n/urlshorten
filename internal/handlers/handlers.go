@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -30,7 +29,7 @@ type result struct {
 	Result string `json:"result"`
 }
 
-func ShortURL(ctx context.Context, serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		l.Errorf("failed to read body: %v", err)
@@ -39,6 +38,7 @@ func ShortURL(ctx context.Context, serverHost string, db Storage, res http.Respo
 	}
 
 	status := http.StatusCreated
+	ctx := req.Context()
 	shortURL, err := db.AddURL(ctx, string(body))
 	if err != nil {
 		if shortURL == "" {
@@ -62,7 +62,8 @@ func ShortURL(ctx context.Context, serverHost string, db Storage, res http.Respo
 	}
 }
 
-func GetBigURL(ctx context.Context, shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
+func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	bigURL, err := db.GetURL(ctx, shortURL)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
@@ -89,7 +90,7 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	ctx := context.Background()
+	ctx := req.Context()
 	status := http.StatusCreated
 	var result result
 	shortURL, err := db.AddURL(ctx, d.URL)
@@ -138,8 +139,8 @@ func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Req
 		return
 
 	}
-	log.Println(bodyBatch)
-	ctx := context.Background()
+
+	ctx := req.Context()
 	resp, err := db.Batch(ctx, serverHost, bodyBatch)
 	if err != nil {
 		l.Errorf("failed to batch: %v", err)
@@ -158,7 +159,8 @@ func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Req
 	res.Write(ans)
 }
 
-func Ping(ctx context.Context, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+func Ping(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	ctx := req.Context()
 	if err := db.PingContext(ctx); err != nil {
 		l.Errorf("failed to ping database: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)

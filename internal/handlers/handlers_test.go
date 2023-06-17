@@ -72,8 +72,7 @@ func TestShortURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			ctx := context.Background()
-			ShortURL(ctx, serverHost, db, w, request, t)
+			ShortURL(serverHost, db, w, request, t)
 
 			res := w.Result()
 			defer res.Body.Close()
@@ -125,8 +124,7 @@ func TestGetBigURL(t *testing.T) {
 				db.urls[test.testToken] = test.want.location
 			}
 
-			ctx := context.Background()
-			GetBigURL(ctx, test.testToken, db, w, request)
+			GetBigURL(test.testToken, db, w, request)
 
 			res := w.Result()
 			defer res.Body.Close()

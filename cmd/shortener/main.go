@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/darod1n/urlshorten/internal/compression"
 	"github.com/darod1n/urlshorten/internal/config"
@@ -22,7 +20,7 @@ func main() {
 	defer l.Sync()
 
 	serverConfig := config.NewConfig()
-	db, err := storage.NewDB(serverConfig.Path, serverConfig.DriverName, serverConfig.DataSourceName)
+	db, err := storage.NewDB(serverConfig)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
@@ -33,15 +31,11 @@ func main() {
 	})
 	router.Use(compression.WithCompress)
 	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
 		shortURL := chi.URLParam(r, "shortURL")
-		handlers.GetBigURL(ctx, shortURL, db, w, r)
+		handlers.GetBigURL(shortURL, db, w, r)
 	})
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-		handlers.ShortURL(ctx, serverConfig.ServerHost, db, w, r, l)
+		handlers.ShortURL(serverConfig.ServerHost, db, w, r, l)
 	})
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
@@ -52,9 +46,7 @@ func main() {
 	})
 
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-		defer cancel()
-		handlers.Ping(ctx, db, w, r, l)
+		handlers.Ping(db, w, r, l)
 	})
 
 	http.Handle("/", router)
