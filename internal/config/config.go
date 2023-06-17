@@ -9,7 +9,6 @@ type Config struct {
 	Addr           string
 	ServerHost     string
 	Path           string
-	DriverName     string
 	DataSourceName string
 }
 
@@ -18,7 +17,6 @@ func NewConfig() *Config {
 	config.Addr = os.Getenv("SERVER_ADDRESS")
 	config.ServerHost = os.Getenv("BASE_URL")
 	config.Path = os.Getenv("FILE_STORAGE_PATH")
-	config.DriverName = "pgx"
 	config.DataSourceName = os.Getenv("DATABASE_DSN")
 
 	var flagAddr string
