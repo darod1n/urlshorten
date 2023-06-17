@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/darod1n/urlshorten/internal/storage/file"
 	"github.com/darod1n/urlshorten/internal/storage/memory"
@@ -17,13 +18,13 @@ type DB interface {
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
 }
 
-func NewDB(path, driverName, dataSourceName string) (DB, error) {
-	if dataSourceName != "" {
-		return postgresql.NewDB(path, driverName, dataSourceName)
+func NewDB(cfg *config.Config) (DB, error) {
+	if cfg.DataSourceName != "" {
+		return postgresql.NewDB(cfg.DataSourceName)
 	}
 
-	if path != "" {
-		return file.NewDB(path)
+	if cfg.Path != "" {
+		return file.NewDB(cfg.Path)
 	}
 	return memory.NewDB()
 }

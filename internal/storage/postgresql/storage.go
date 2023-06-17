@@ -5,18 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"net/url"
-	"sync"
 
 	"github.com/darod1n/urlshorten/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type DB struct {
-	urls map[string]string
-	path string
-	mu   *sync.Mutex
 	base *sql.DB
 }
+
+const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	row := db.base.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) on conflict (original_url) do nothing returning short_url;", url)
@@ -131,7 +129,7 @@ func createDB(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-func NewDB(path, driverName, dataSourceName string) (*DB, error) {
+func NewDB(dataSourceName string) (*DB, error) {
 
 	base, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
@@ -144,8 +142,6 @@ func NewDB(path, driverName, dataSourceName string) (*DB, error) {
 	}
 
 	return &DB{
-		mu:   &sync.Mutex{},
-		path: path,
 		base: base,
 	}, nil
 }
