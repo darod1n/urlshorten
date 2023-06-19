@@ -2,50 +2,43 @@ package file
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"sync"
 
-	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
+	"github.com/darod1n/urlshorten/internal/storage/memory"
 )
 
 type DB struct {
-	urls map[string]string
-	path string
-	mu   *sync.Mutex
-	p    *producer
-	c    *consumer
+	memory *memory.DB
+	path   string
+	uuid   int
+	mu     *sync.Mutex
+	p      *producer
+	c      *consumer
 }
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	shortURL := helpers.GenerateShortURL(url, 10)
-	db.urls[shortURL] = url
+	shortURL, err := db.memory.AddURL(ctx, url)
+	if err != nil {
+		return "", fmt.Errorf("failed to add url to memory storage: %v", err)
+	}
 
 	event := event{
-		ID:          len(db.urls),
+		ID:          db.uuid + 1,
 		ShortURL:    shortURL,
 		OriginalURL: url,
 	}
 
-	err := db.p.WriteEvent(&event)
-	if err != nil {
+	if err := db.p.WriteEvent(&event); err != nil {
 		return "", err
 	}
 	return shortURL, nil
 }
 
 func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
-	db.mu.Lock()
-	defer db.mu.Unlock()
-	bigURL, ok := db.urls[shortURL]
-	if ok {
-		return bigURL, nil
-	}
-	return "", errors.New("failed get url")
+	return db.memory.GetURL(ctx, shortURL)
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
@@ -88,12 +81,19 @@ func NewDB(path string) (*DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	memory, err := memory.NewDB(urls)
+	if err != nil {
+		return nil, err
+	}
+
+	uuid := len(urls)
 
 	return &DB{
-		urls: urls,
-		mu:   &sync.Mutex{},
-		path: path,
-		p:    p,
-		c:    c,
+		memory: memory,
+		mu:     &sync.Mutex{},
+		uuid:   uuid,
+		path:   path,
+		p:      p,
+		c:      c,
 	}, nil
 }

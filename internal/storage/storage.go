@@ -26,5 +26,6 @@ func NewDB(cfg *config.Config) (DB, error) {
 	if cfg.Path != "" {
 		return file.NewDB(cfg.Path)
 	}
-	return memory.NewDB()
+	urls := make(map[string]string)
+	return memory.NewDB(urls)
 }

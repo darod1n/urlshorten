@@ -61,9 +61,9 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	return data, nil
 }
 
-func NewDB() (*DB, error) {
+func NewDB(urls map[string]string) (*DB, error) {
 	return &DB{
-		urls: make(map[string]string),
+		urls: urls,
 		mu:   &sync.Mutex{},
 	}, nil
 }
