@@ -19,7 +19,7 @@ type DB struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	shortURL := helpers.GenerateShortURL(6)
+	shortURL := helpers.GenerateShortURL(10)
 	row, err := db.base.ExecContext(ctx, "INSERT INTO urls (original_url, short_url) VALUES($1, $2) on conflict (original_url) do nothing;", url, shortURL)
 	if err != nil {
 		return "", err

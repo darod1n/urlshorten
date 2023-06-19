@@ -3,6 +3,7 @@ package memory
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 
@@ -20,7 +21,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
-	shortURL := helpers.GenerateShortURL(6)
+	shortURL := helpers.GenerateShortURL(10)
 	db.urls[shortURL] = url
 	return shortURL, nil
 }
@@ -50,7 +51,11 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 		if err != nil {
 			return nil, err
 		}
-		url, _ := url.JoinPath(host, shortURL)
+		url, err := url.JoinPath(host, shortURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to join path: %v", err)
+		}
+
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	return data, nil
