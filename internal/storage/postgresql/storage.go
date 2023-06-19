@@ -3,9 +3,11 @@ package postgresql
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
 	"net/url"
+	"strings"
 
+	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -17,16 +19,26 @@ type DB struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	row := db.base.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) on conflict (original_url) do nothing returning short_url;", url)
-
-	var shortURL string
-	row.Scan(&shortURL)
-
-	if shortURL == "" {
-		row := db.base.QueryRowContext(ctx, "select short_url from urls where original_url=$1;", url)
-		row.Scan(&shortURL)
-		return shortURL, errors.New("origin url is exist")
+	shortURL := helpers.GenerateShortURL(6)
+	row, err := db.base.ExecContext(ctx, "INSERT INTO urls (original_url, short_url) VALUES($1, $2) on conflict (original_url) do nothing;", url, shortURL)
+	if err != nil {
+		return "", err
 	}
+
+	rowAffected, err := row.RowsAffected()
+	if err != nil {
+		return "", err
+	}
+
+	if rowAffected == 0 {
+		row := db.base.QueryRowContext(ctx, "SELECT short_url FROM urls where original_url=$1", url)
+		var t string
+		if err := row.Scan(&t); err != nil {
+			return "", err
+		}
+		return t, models.ErrExistURL
+	}
+
 	return shortURL, nil
 }
 
@@ -48,25 +60,28 @@ func (db *DB) Close() error {
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
-	tx, err := db.base.Begin()
-	if err != nil {
-		return nil, err
-	}
 
 	var data []models.BatchResponse
+	batchValues := make([]string, 0, len(batch))
 	for _, val := range batch {
-		row := tx.QueryRowContext(ctx, "INSERT INTO urls (original_url) VALUES($1) returning short_url;", val.OriginURL)
+		shortURL := helpers.GenerateShortURL(6)
+		valueQuery := fmt.Sprintf("('%s', '%s')", val.OriginURL, shortURL)
+		batchValues = append(batchValues, valueQuery)
 
-		var shortURL string
-		err := row.Scan(&shortURL)
+		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to join path: %v", err)
 		}
-
-		url, _ := url.JoinPath(host, shortURL)
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-	return data, tx.Commit()
+	query := fmt.Sprintf("INSERT INTO urls (original_url, short_url) VALUES %s;", strings.Join(batchValues, ","))
+	fmt.Println(query)
+	_, err := db.base.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to executed query: %v", err)
+	}
+
+	return data, nil
 }
 
 func createDB(ctx context.Context, db *sql.DB) error {
@@ -81,12 +96,12 @@ func NewDB(dataSourceName string) (*DB, error) {
 
 	base, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
 	ctx := context.Background()
 	if err := createDB(ctx, base); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create database: %v", err)
 	}
 
 	return &DB{
