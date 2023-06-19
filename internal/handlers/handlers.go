@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -41,7 +42,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 	ctx := req.Context()
 	shortURL, err := db.AddURL(ctx, string(body))
 	if err != nil {
-		if shortURL == "" {
+		if !errors.Is(err, models.ErrExistURL) {
 			l.Errorf("failed to add url: %v", err)
 			res.WriteHeader(http.StatusBadRequest)
 			return
@@ -55,6 +56,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
+
 	res.WriteHeader(status)
 	if _, err := res.Write([]byte(resultURL)); err != nil {
 		l.Errorf("failed to write byte: %v", err)
