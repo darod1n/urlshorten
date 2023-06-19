@@ -24,7 +24,7 @@ type MockDB struct {
 }
 
 func (db *MockDB) AddURL(ctx context.Context, url string) (string, error) {
-	shortURL := helpers.GenerateShortURL(6)
+	shortURL := helpers.GenerateShortURL(url, 6)
 	db.urls[shortURL] = url
 	return shortURL, nil
 }

@@ -19,7 +19,7 @@ type DB struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	shortURL := helpers.GenerateShortURL(10)
+	shortURL := helpers.GenerateShortURL(url, 10)
 	row, err := db.base.ExecContext(ctx, "INSERT INTO urls (original_url, short_url) VALUES($1, $2) on conflict (original_url) do nothing;", url, shortURL)
 	if err != nil {
 		return "", err
@@ -64,7 +64,7 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	var data []models.BatchResponse
 	batchValues := make([]string, 0, len(batch))
 	for _, val := range batch {
-		shortURL := helpers.GenerateShortURL(10)
+		shortURL := helpers.GenerateShortURL(val.OriginURL, 10)
 		valueQuery := fmt.Sprintf("('%s', '%s')", val.OriginURL, shortURL)
 		batchValues = append(batchValues, valueQuery)
 

@@ -22,7 +22,7 @@ type DB struct {
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	shortURL := helpers.GenerateShortURL(10)
+	shortURL := helpers.GenerateShortURL(url, 10)
 	db.urls[shortURL] = url
 
 	event := event{
