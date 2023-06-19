@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 
@@ -58,8 +59,14 @@ func (db *DB) Close() error {
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
 	var data []models.BatchResponse
 	for _, val := range batch {
-		shortURL, _ := db.AddURL(ctx, val.OriginURL)
-		url, _ := url.JoinPath(host, shortURL)
+		shortURL, err := db.AddURL(ctx, val.OriginURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to add url: %v", err)
+		}
+		url, err := url.JoinPath(host, shortURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to join path: %v", err)
+		}
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	return data, nil
