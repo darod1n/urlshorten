@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 
@@ -65,7 +64,7 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	var data []models.BatchResponse
 	batchValues := make([]string, 0, len(batch))
 	for _, val := range batch {
-		shortURL := helpers.GenerateShortURL(6)
+		shortURL := helpers.GenerateShortURL(10)
 		valueQuery := fmt.Sprintf("('%s', '%s')", val.OriginURL, shortURL)
 		batchValues = append(batchValues, valueQuery)
 
@@ -76,7 +75,6 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	query := fmt.Sprintf("INSERT INTO urls (original_url, short_url) VALUES %s on conflict (original_url) do nothing;", strings.Join(batchValues, ","))
-	log.Println(query)
 	_, err := db.base.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
