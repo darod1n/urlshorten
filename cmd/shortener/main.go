@@ -24,6 +24,7 @@ func main() {
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
+	defer db.Close()
 
 	router := chi.NewRouter()
 	router.Use(func(h http.Handler) http.Handler {
