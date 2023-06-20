@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -72,24 +72,25 @@ func (db *DB) Close() {
 	db.base.Close()
 }
 
-func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) ([]models.BatchResponse, error) {
+
+	batch := &pgx.Batch{}
 
 	var data []models.BatchResponse
-	batchValues := make([]string, 0, len(batch))
-	for _, val := range batch {
-		shortURL := helpers.GenerateShortURL(val.OriginURL, 10)
-		valueQuery := fmt.Sprintf("('%s', '%s')", val.OriginURL, shortURL)
-		batchValues = append(batchValues, valueQuery)
+	for _, val := range br {
 
+		shortURL := helpers.GenerateShortURL(val.OriginURL, 10)
+		batch.Queue("INSERT INTO urls (original_url, short_url) VALUES ($1, $2) on conflict (original_url) do nothing;", val.OriginURL, shortURL)
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to join path: %v", err)
 		}
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-	query := fmt.Sprintf("INSERT INTO urls (original_url, short_url) VALUES %s on conflict (original_url) do nothing;", strings.Join(batchValues, ","))
-	_, err := db.base.Exec(ctx, query)
-	if err != nil {
+
+	b := db.base.SendBatch(ctx, batch)
+
+	if _, err := b.Exec(); err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
 	}
 
