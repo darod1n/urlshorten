@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -21,21 +22,35 @@ const driverName = "pgx"
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	shortURL := helpers.GenerateShortURL(url, 10)
 	row := db.base.QueryRowContext(ctx, `
-	with cte as (
-		INSERT INTO public.urls (short_url, original_url)
-		VALUES($2, $1) 
-		on conflict (original_url) do nothing 
-		returning short_url
+	with dataNew as (
+		select 
+			$2 as short_url,
+			$1 as original_url
+	), 
+	dupData as (
+	select 
+			short_url,
+			original_url
+		from urls
+		where original_url  in (select original_url  from dataNew)
+	), 
+	
+	insData as (
+		insert into urls
+			select * from dataNew
+			where (original_url) not in (select original_url from dupData)
+			returning short_url
+	---
 	) 
-	select null as result where exists (select 1 from cte) 
-	union all 
-	select short_url from urls 
-	where original_url=$1 and not exists (select 1 from cte);
+	
+	select short_url from dupData union all select * from insData;
 	`, url, shortURL)
 	var queryShortURL string
 	if err := row.Scan(&queryShortURL); err != nil {
+		log.Println(queryShortURL)
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
+	log.Println(queryShortURL)
 	if queryShortURL != shortURL {
 		return queryShortURL, models.ErrExistURL
 	}
