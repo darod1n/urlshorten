@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/url"
 	"strings"
 
@@ -43,16 +42,14 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	---
 	) 
 	
-	select short_url from dupData union all select * from insData;
+	select short_url, 'true' as result from dupData union all select short_url, 'false' as result from insData;
 	`, url, shortURL)
 	var queryShortURL string
-	if err := row.Scan(&queryShortURL); err != nil {
-
+	var status bool
+	if err := row.Scan(&queryShortURL, &status); err != nil {
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
-	log.Println(queryShortURL)
-	log.Println(shortURL)
-	if queryShortURL != shortURL {
+	if status {
 		return queryShortURL, models.ErrExistURL
 	}
 
