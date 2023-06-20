@@ -23,14 +23,14 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	row := db.base.QueryRowContext(ctx, `
 	with cte as (
 		INSERT INTO public.urls (short_url, original_url)
-		VALUES($1, $2) 
+		VALUES($2, $1) 
 		on conflict (original_url) do nothing 
 		returning short_url
 	) 
 	select null as result where exists (select 1 from cte) 
 	union all 
 	select short_url from urls 
-	where original_url=$2 and not exists (select 1 from cte);
+	where original_url=$1 and not exists (select 1 from cte);
 	`, url, shortURL)
 	var queryShortURL string
 	if err := row.Scan(queryShortURL); err != nil {
