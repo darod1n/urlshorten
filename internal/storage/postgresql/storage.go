@@ -2,25 +2,24 @@ package postgresql
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DB struct {
-	base *sql.DB
+	base *pgxpool.Pool
 }
 
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	shortURL := helpers.GenerateShortURL(url, 10)
-	row := db.base.QueryRowContext(ctx, `
+	row := db.base.QueryRow(ctx, `
 	with dataNew as (
 		select 
 			$2 as short_url,
@@ -57,7 +56,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 }
 
 func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
-	row := db.base.QueryRowContext(ctx, "select original_url from urls where short_url=$1;", shortURL)
+	row := db.base.QueryRow(ctx, "select original_url from urls where short_url=$1;", shortURL)
 	var originalURL string
 	if err := row.Scan(&originalURL); err != nil {
 		return "", err
@@ -66,11 +65,11 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
-	return db.base.PingContext(ctx)
+	return db.base.Ping(ctx)
 }
 
-func (db *DB) Close() error {
-	return db.base.Close()
+func (db *DB) Close() {
+	db.base.Close()
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
@@ -89,7 +88,7 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	query := fmt.Sprintf("INSERT INTO urls (original_url, short_url) VALUES %s on conflict (original_url) do nothing;", strings.Join(batchValues, ","))
-	_, err := db.base.ExecContext(ctx, query)
+	_, err := db.base.Exec(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
 	}
@@ -97,8 +96,8 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	return data, nil
 }
 
-func createDB(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, "create table if not exists urls(short_url text primary key, original_url text unique);")
+func createDB(ctx context.Context, db *pgxpool.Pool) error {
+	_, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique);")
 	if err != nil {
 		return err
 	}
@@ -106,13 +105,12 @@ func createDB(ctx context.Context, db *sql.DB) error {
 }
 
 func NewDB(dataSourceName string) (*DB, error) {
-
-	base, err := sql.Open(driverName, dataSourceName)
+	ctx := context.Background()
+	base, err := pgxpool.New(ctx, dataSourceName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
-	ctx := context.Background()
 	if err := createDB(ctx, base); err != nil {
 		return nil, fmt.Errorf("failed to create database: %v", err)
 	}

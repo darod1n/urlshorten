@@ -45,8 +45,7 @@ func (db *DB) PingContext(ctx context.Context) error {
 	return nil
 }
 
-func (db *DB) Close() error {
-	return nil
+func (db *DB) Close() {
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
