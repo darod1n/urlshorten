@@ -20,23 +20,24 @@ const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	shortURL := helpers.GenerateShortURL(url, 10)
-	row, err := db.base.ExecContext(ctx, "INSERT INTO urls (original_url, short_url) VALUES($1, $2) on conflict (original_url) do nothing;", url, shortURL)
-	if err != nil {
-		return "", err
+	row := db.base.QueryRowContext(ctx, `
+	with cte as (
+		INSERT INTO public.urls (short_url, original_url)
+		VALUES($1, $2) 
+		on conflict (original_url) do nothing 
+		returning short_url
+	) 
+	select null as result where exists (select 1 from cte) 
+	union all 
+	select short_url from urls 
+	where original_url=$2 and not exists (select 1 from cte);
+	`, url, shortURL)
+	var queryShortURL string
+	if err := row.Scan(queryShortURL); err != nil {
+		return "", fmt.Errorf("failed scan query: %v", err)
 	}
-
-	rowAffected, err := row.RowsAffected()
-	if err != nil {
-		return "", err
-	}
-
-	if rowAffected == 0 {
-		row := db.base.QueryRowContext(ctx, "SELECT short_url FROM urls where original_url=$1", url)
-		var t string
-		if err := row.Scan(&t); err != nil {
-			return "", err
-		}
-		return t, models.ErrExistURL
+	if queryShortURL != shortURL {
+		return queryShortURL, models.ErrExistURL
 	}
 
 	return shortURL, nil
