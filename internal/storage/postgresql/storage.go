@@ -33,7 +33,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	where original_url=$1 and not exists (select 1 from cte);
 	`, url, shortURL)
 	var queryShortURL string
-	if err := row.Scan(queryShortURL); err != nil {
+	if err := row.Scan(&queryShortURL); err != nil {
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
 	if queryShortURL != shortURL {
