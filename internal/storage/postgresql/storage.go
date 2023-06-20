@@ -41,7 +41,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	---
 	) 
 	
-	select short_url, 'true' as result from dupData union all select short_url, 'false' as result from insData;
+	select short_url, true as result from dupData union all select short_url, false as result from insData;
 	`, url, shortURL)
 	var queryShortURL string
 	var status bool
