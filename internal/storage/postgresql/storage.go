@@ -47,10 +47,11 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	`, url, shortURL)
 	var queryShortURL string
 	if err := row.Scan(&queryShortURL); err != nil {
-		log.Println(queryShortURL)
+
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
 	log.Println(queryShortURL)
+	log.Println(shortURL)
 	if queryShortURL != shortURL {
 		return queryShortURL, models.ErrExistURL
 	}
