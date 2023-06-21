@@ -92,11 +92,17 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	}
 
 	b := tx.SendBatch(ctx, batch)
+	defer b.Close()
+
 	if _, err := b.Exec(); err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
 	}
 
-	return data, tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
+	return data, nil
 }
 
 func createDB(ctx context.Context, db *pgxpool.Pool) error {
