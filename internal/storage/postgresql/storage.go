@@ -73,11 +73,8 @@ func (db *DB) Close() {
 }
 
 func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) ([]models.BatchResponse, error) {
-	tx, err := db.base.Begin(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %v", err)
-	}
 	batch := &pgx.Batch{}
+	batch.Queue("begin;")
 
 	var data []models.BatchResponse
 	for _, val := range br {
@@ -90,15 +87,11 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 		}
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-
-	b := tx.SendBatch(ctx, batch)
+	batch.Queue("commit;")
+	b := db.base.SendBatch(ctx, batch)
 
 	if _, err := b.Exec(); err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return data, nil
