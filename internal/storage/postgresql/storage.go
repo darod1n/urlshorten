@@ -59,7 +59,7 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	row := db.base.QueryRow(ctx, "select original_url from urls where short_url=$1;", shortURL)
 	var originalURL string
 	if err := row.Scan(&originalURL); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to scan query row: %v", err)
 	}
 	return originalURL, nil
 }
