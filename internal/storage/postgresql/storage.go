@@ -91,13 +91,13 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 		}
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %v", err)
-	}
-
 	b := tx.SendBatch(ctx, batch)
 	if _, err := b.Exec(); err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %v", err)
 	}
 
 	return data, nil
