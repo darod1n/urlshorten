@@ -1,18 +1,15 @@
 package helpers
 
 import (
-	"math/rand"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 const (
 	alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
-func GenerateShortURL(lenToken int) string {
-	shortURL := make([]byte, 0, lenToken)
-	for i := 0; i < lenToken; i++ {
-		r := rand.Intn(len(alphabet))
-		shortURL = append(shortURL, alphabet[r])
-	}
-	return string(shortURL)
+func GenerateShortURL(url string, len int) string {
+	hash := md5.Sum([]byte(url))
+	return hex.EncodeToString(hash[:])[:len]
 }

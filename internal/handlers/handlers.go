@@ -2,17 +2,21 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 
-	"github.com/darod1n/urlshorten/internal/helpers"
+	"github.com/darod1n/urlshorten/internal/models"
 )
 
 type Storage interface {
-	AddURL(url string, shortURL string) error
-	GetURL(shortURL string) (string, bool)
+	AddURL(ctx context.Context, url string) (string, error)
+	GetURL(ctx context.Context, shortURL string) (string, error)
+	PingContext(ctx context.Context) error
+	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
 }
 
 type logger interface {
@@ -34,24 +38,26 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 		return
 	}
 
-	shortURL := helpers.GenerateShortURL(6)
-
-	if err := db.AddURL(string(body), shortURL); err != nil {
-		l.Errorf("failed to add url: %v", err)
-		res.WriteHeader((http.StatusBadRequest))
-		return
+	status := http.StatusCreated
+	ctx := req.Context()
+	shortURL, err := db.AddURL(ctx, string(body))
+	if err != nil {
+		if !errors.Is(err, models.ErrExistURL) {
+			l.Errorf("failed to add url: %v", err)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		status = http.StatusConflict
 	}
 
-	res.WriteHeader(http.StatusCreated)
-
 	resultURL, err := url.JoinPath(serverHost, shortURL)
-
 	if err != nil {
 		l.Errorf("failed to join path: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	res.WriteHeader(status)
 	if _, err := res.Write([]byte(resultURL)); err != nil {
 		l.Errorf("failed to write byte: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
@@ -59,8 +65,9 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 }
 
 func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
-	bigURL, ok := db.GetURL(shortURL)
-	if !ok {
+	ctx := req.Context()
+	bigURL, err := db.GetURL(ctx, shortURL)
+	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -85,8 +92,18 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	shortURL := helpers.GenerateShortURL(6)
-	db.AddURL(d.URL, shortURL)
+	ctx := req.Context()
+	status := http.StatusCreated
+	var result result
+	shortURL, err := db.AddURL(ctx, d.URL)
+	if err != nil {
+		if shortURL == "" {
+			l.Errorf("failed to add url: %v", err)
+			res.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		status = http.StatusConflict
+	}
 
 	resultURL, err := url.JoinPath(serverHost, shortURL)
 	if err != nil {
@@ -95,7 +112,6 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	var result result
 	result.Result = resultURL
 	ans, err := json.Marshal(result)
 	if err != nil {
@@ -105,6 +121,52 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	}
 
 	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(status)
+	res.Write(ans)
+}
+
+func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	var buf bytes.Buffer
+	_, err := buf.ReadFrom(req.Body)
+	if err != nil {
+		l.Errorf("failed to read body: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var bodyBatch []models.BatchRequest
+	if err := json.Unmarshal(buf.Bytes(), &bodyBatch); err != nil {
+		l.Errorf("failed to unmarshal body: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+
+	}
+
+	ctx := req.Context()
+	resp, err := db.Batch(ctx, serverHost, bodyBatch)
+	if err != nil {
+		l.Errorf("failed to batch: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	ans, err := json.Marshal(resp)
+	if err != nil {
+		l.Errorf("failed to marshal result: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusCreated)
 	res.Write(ans)
+}
+
+func Ping(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	ctx := req.Context()
+	if err := db.PingContext(ctx); err != nil {
+		l.Errorf("failed to ping database: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
 }

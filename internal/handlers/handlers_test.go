@@ -2,27 +2,47 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/darod1n/urlshorten/internal/helpers"
+	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/stretchr/testify/assert"
+)
+
+const (
+	serverHost = "http://localhost:8080"
 )
 
 type MockDB struct {
 	urls map[string]string
 }
 
-func (db *MockDB) AddURL(url string, shortURL string) error {
+func (db *MockDB) AddURL(ctx context.Context, url string) (string, error) {
+	shortURL := helpers.GenerateShortURL(url, 6)
 	db.urls[shortURL] = url
+	return shortURL, nil
+}
+
+func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, error) {
+	bigURL, ok := db.urls[shortURL]
+	if ok {
+		return bigURL, nil
+	}
+	return bigURL, errors.New("")
+}
+
+func (db *MockDB) PingContext(ctx context.Context) error {
 	return nil
 }
 
-func (db *MockDB) GetURL(shortURL string) (string, bool) {
-	bigURL, ok := db.urls[shortURL]
-	return bigURL, ok
+func (db *MockDB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
+	return nil, nil
 }
 
 func TestShortURL(t *testing.T) {
@@ -52,7 +72,6 @@ func TestShortURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			serverHost := "http://localhost:8080"
 			ShortURL(serverHost, db, w, request, t)
 
 			res := w.Result()
@@ -102,10 +121,7 @@ func TestGetBigURL(t *testing.T) {
 			db := &MockDB{urls: map[string]string{}}
 
 			if test.addToken {
-				err := db.AddURL(test.want.location, test.testToken)
-				if err != nil {
-					t.Errorf("failed to add url: %v", err)
-				}
+				db.urls[test.testToken] = test.want.location
 			}
 
 			GetBigURL(test.testToken, db, w, request)
@@ -154,7 +170,6 @@ func TestAPIShortenURL(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			db := &MockDB{urls: map[string]string{}}
-			serverHost := "http://localhost:8080"
 			APIShortenURL(serverHost, db, w, request, t)
 
 			res := w.Result()

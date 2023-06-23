@@ -20,10 +20,11 @@ func main() {
 	defer l.Sync()
 
 	serverConfig := config.NewConfig()
-	db, err := storage.NewDB(serverConfig.Path)
+	db, err := storage.NewDB(serverConfig)
 	if err != nil {
 		l.Fatalf("failed to create DB: %v", err)
 	}
+	defer db.Close()
 
 	router := chi.NewRouter()
 	router.Use(func(h http.Handler) http.Handler {
@@ -39,6 +40,14 @@ func main() {
 	})
 	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
+	})
+
+	router.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Batch(serverConfig.ServerHost, db, w, r, l)
+	})
+
+	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		handlers.Ping(db, w, r, l)
 	})
 
 	http.Handle("/", router)
