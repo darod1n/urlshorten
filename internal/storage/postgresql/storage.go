@@ -79,6 +79,7 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin tx: %v", err)
 	}
+	defer tx.Commit(ctx)
 
 	var data []models.BatchResponse
 	for _, val := range br {
@@ -92,16 +93,9 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	b := tx.SendBatch(ctx, batch)
-	defer func() {
-		if e := b.Close(); e != nil {
-			err = fmt.Errorf("failed to close send batch: %v", e)
-			_ = tx.Rollback(ctx)
-		}
-
-		if e := tx.Commit(ctx); e != nil {
-			err = e
-		}
-	}()
+	if err := b.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close send batch: %v", err)
+	}
 
 	if _, err := b.Exec(); err != nil {
 		return nil, fmt.Errorf("failed to executed query: %v", err)
