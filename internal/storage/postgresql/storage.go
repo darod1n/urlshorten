@@ -88,6 +88,9 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 		batch.Queue("INSERT INTO urls (original_url, short_url) VALUES ($1, $2) on conflict (original_url) do nothing;", val.OriginURL, shortURL)
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
+			if err := tx.Rollback(ctx); err != nil {
+				return nil, fmt.Errorf("failed to rollback: %v", err)
+			}
 			return nil, fmt.Errorf("failed to join path: %v", err)
 		}
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
@@ -96,6 +99,9 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	defer b.Close()
 
 	if _, err := b.Exec(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
+			return nil, fmt.Errorf("failed to rollback: %v", err)
+		}
 		return nil, fmt.Errorf("failed to executed query: %v", err)
 	}
 
