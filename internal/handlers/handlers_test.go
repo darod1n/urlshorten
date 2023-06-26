@@ -45,6 +45,14 @@ func (db *MockDB) Batch(ctx context.Context, host string, batch []models.BatchRe
 	return nil, nil
 }
 
+func (db *MockDB) CreateUserID(ctx context.Context) (string, error) {
+	return "", nil
+}
+
+func (db *MockDB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
+	return nil, nil
+}
+
 func TestShortURL(t *testing.T) {
 	type want struct {
 		code int
