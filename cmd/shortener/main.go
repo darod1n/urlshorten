@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/compression"
 	"github.com/darod1n/urlshorten/internal/config"
 	"github.com/darod1n/urlshorten/internal/handlers"
@@ -30,7 +31,14 @@ func main() {
 	router.Use(func(h http.Handler) http.Handler {
 		return logger.WithLoggin(h, l)
 	})
+
+	router.Use(func(h http.Handler) http.Handler {
+		return authorization.WithAutorization(h, db, serverConfig.SecretKey, l)
+
+	})
+
 	router.Use(compression.WithCompress)
+
 	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
 		handlers.GetBigURL(shortURL, db, w, r)
@@ -44,6 +52,10 @@ func main() {
 
 	router.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Batch(serverConfig.ServerHost, db, w, r, l)
+	})
+
+	router.Post("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+		handlers.GetUserURLS(db, w, r, l)
 	})
 
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
