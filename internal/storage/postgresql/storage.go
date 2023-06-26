@@ -26,7 +26,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 		select 
 			$2 as short_url,
 			$1 as original_url,
-			$3 as user_id
+			$3::uuid as user_id
 	), 
 	dupData as (
 	select 
@@ -45,7 +45,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	) 
 	
 	select short_url, true as result from dupData union all select short_url, false as result from insData;
-	`, url, shortURL, userID.(string))
+	`, url, shortURL, userID)
 	var queryShortURL string
 	var status bool
 	if err := row.Scan(&queryShortURL, &status); err != nil {
@@ -120,7 +120,7 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	for _, val := range br {
 
 		shortURL := helpers.GenerateShortURL(val.OriginURL, 10)
-		batch.Queue("INSERT INTO urls (original_url, short_url, user_id) VALUES ($1, $2, $3) on conflict (original_url) do nothing;", val.OriginURL, shortURL, userID.(string))
+		batch.Queue("INSERT INTO urls (original_url, short_url, user_id) VALUES ($1, $2, $3::uuid) on conflict (original_url) do nothing;", val.OriginURL, shortURL, userID)
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
 			if err := tx.Rollback(ctx); err != nil {
