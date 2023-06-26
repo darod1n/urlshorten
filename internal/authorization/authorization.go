@@ -22,6 +22,8 @@ type logger interface {
 	Errorf(template string, args ...interface{})
 }
 
+type KeyUserID string
+
 func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authToken, err := r.Cookie("Authorization-Token")
@@ -50,7 +52,7 @@ func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) ht
 			}
 			r.AddCookie(cookie)
 
-			ctx := context.WithValue(r.Context(), "UserID", userID)
+			ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
 			h.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -66,7 +68,7 @@ func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) ht
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "UserID", userID)
+		ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
