@@ -18,12 +18,14 @@ type DB struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
+	userID := ctx.Value("UserID")
 	shortURL := helpers.GenerateShortURL(url, 10)
 	row := db.base.QueryRow(ctx, `
 	with dataNew as (
 		select 
 			$2 as short_url,
 			$1 as original_url
+			$3 as user_id
 	), 
 	dupData as (
 	select 
@@ -42,7 +44,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	) 
 	
 	select short_url, true as result from dupData union all select short_url, false as result from insData;
-	`, url, shortURL)
+	`, url, shortURL, userID.(string))
 	var queryShortURL string
 	var status bool
 	if err := row.Scan(&queryShortURL, &status); err != nil {
@@ -72,6 +74,36 @@ func (db *DB) Close() {
 	db.base.Close()
 }
 
+func (db *DB) CreateUserID(ctx context.Context) (string, error) {
+	row := db.base.QueryRow(ctx, "insert into user_id default values returning id;")
+	var userID string
+	if err := row.Scan(&userID); err != nil {
+		return "", fmt.Errorf("failed to scan query create user_id: %v", err)
+	}
+	return userID, nil
+}
+
+func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
+	userID := ctx.Value("UserID")
+	rows, err := db.base.Query(ctx, "select original_url, short_url from urls where user_id=$1", userID.(string))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query: %v", err)
+	}
+	defer rows.Close()
+
+	var userURLS []models.UserURLS
+	for rows.Next() {
+		var urls models.UserURLS
+
+		if err := rows.Scan(&urls.OriginURL, &urls.ShortURL); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		userURLS = append(userURLS, urls)
+	}
+	return userURLS, nil
+}
+
 func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) ([]models.BatchResponse, error) {
 
 	batch := &pgx.Batch{}
@@ -81,11 +113,12 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	}
 	defer tx.Commit(ctx)
 
+	userID := ctx.Value("UserID")
 	var data []models.BatchResponse
 	for _, val := range br {
 
 		shortURL := helpers.GenerateShortURL(val.OriginURL, 10)
-		batch.Queue("INSERT INTO urls (original_url, short_url) VALUES ($1, $2) on conflict (original_url) do nothing;", val.OriginURL, shortURL)
+		batch.Queue("INSERT INTO urls (original_url, short_url, user_id) VALUES ($1, $2, $3) on conflict (original_url) do nothing;", val.OriginURL, shortURL, userID.(string))
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
 			if err := tx.Rollback(ctx); err != nil {
@@ -109,9 +142,13 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 }
 
 func createDB(ctx context.Context, db *pgxpool.Pool) error {
-	_, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique);")
-	if err != nil {
-		return err
+	if _, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique, user_id uuid);"); err != nil {
+
+		return fmt.Errorf("failed to create urls table: %v", err)
+	}
+
+	if _, err := db.Exec(ctx, "create table user_id(id uuid default gen_random_uuid() primary key);"); err != nil {
+		return fmt.Errorf("failed to create user_id table: %v", err)
 	}
 	return nil
 }
