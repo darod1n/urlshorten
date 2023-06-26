@@ -50,7 +50,7 @@ func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) ht
 				Name:  "Authorization-Token",
 				Value: token,
 			}
-			r.AddCookie(cookie)
+			http.SetCookie(w, cookie)
 
 			ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
 			h.ServeHTTP(w, r.WithContext(ctx))
