@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -18,13 +19,13 @@ type DB struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	userID := ctx.Value("UserID")
+	userID := ctx.Value(authorization.KeyUserID("UserID"))
 	shortURL := helpers.GenerateShortURL(url, 10)
 	row := db.base.QueryRow(ctx, `
 	with dataNew as (
 		select 
 			$2 as short_url,
-			$1 as original_url
+			$1 as original_url,
 			$3 as user_id
 	), 
 	dupData as (
@@ -77,14 +78,15 @@ func (db *DB) Close() {
 func (db *DB) CreateUserID(ctx context.Context) (string, error) {
 	row := db.base.QueryRow(ctx, "insert into user_id default values returning id;")
 	var userID string
-	if err := row.Scan(&userID); err != nil {
+	err := row.Scan(&userID)
+	if err != nil {
 		return "", fmt.Errorf("failed to scan query create user_id: %v", err)
 	}
 	return userID, nil
 }
 
 func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
-	userID := ctx.Value("UserID")
+	userID := ctx.Value(authorization.KeyUserID("UserID"))
 	rows, err := db.base.Query(ctx, "select original_url, short_url from urls where user_id=$1", userID.(string))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %v", err)
@@ -147,7 +149,7 @@ func createDB(ctx context.Context, db *pgxpool.Pool) error {
 		return fmt.Errorf("failed to create urls table: %v", err)
 	}
 
-	if _, err := db.Exec(ctx, "create table user_id(id uuid default gen_random_uuid() primary key);"); err != nil {
+	if _, err := db.Exec(ctx, "create table if not exists user_id(id uuid default gen_random_uuid() primary key);"); err != nil {
 		return fmt.Errorf("failed to create user_id table: %v", err)
 	}
 	return nil
