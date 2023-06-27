@@ -86,12 +86,11 @@ func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, 
 	var userURLS []models.UserURLS
 	for rows.Next() {
 		var urls models.UserURLS
-		var shortUrl string
-		if err := rows.Scan(&urls.OriginURL, &shortUrl); err != nil {
+		if err := rows.Scan(&urls.OriginURL, &urls.ShortURL); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %v", err)
 		}
 
-		urls.ShortURL, err = url.JoinPath(host, shortUrl)
+		urls.ShortURL, err = url.JoinPath(host, urls.ShortURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to join path: %v", err)
 		}
