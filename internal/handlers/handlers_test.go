@@ -45,7 +45,7 @@ func (db *MockDB) Batch(ctx context.Context, host string, batch []models.BatchRe
 	return nil, nil
 }
 
-func (db *MockDB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
+func (db *MockDB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
 	return nil, nil
 }
 

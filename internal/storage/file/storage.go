@@ -48,7 +48,7 @@ func (db *DB) PingContext(ctx context.Context) error {
 func (db *DB) Close() {
 }
 
-func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
+func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
 	return nil, nil
 }
 

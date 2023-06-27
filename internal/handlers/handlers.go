@@ -17,7 +17,7 @@ type Storage interface {
 	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
-	GetUserURLS(ctx context.Context) ([]models.UserURLS, error)
+	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
 }
 
 type logger interface {
@@ -172,9 +172,9 @@ func Ping(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func GetUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+func GetUserURLS(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	ctx := req.Context()
-	userURLS, err := db.GetUserURLS(ctx)
+	userURLS, err := db.GetUserURLS(ctx, serverHost)
 	if err != nil {
 		l.Errorf("failed to get user urls: %v", err)
 		res.WriteHeader(http.StatusBadRequest)

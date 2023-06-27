@@ -55,7 +55,7 @@ func main() {
 	})
 
 	router.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
-		handlers.GetUserURLS(db, w, r, l)
+		handlers.GetUserURLS(serverConfig.ServerHost, db, w, r, l)
 	})
 
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {

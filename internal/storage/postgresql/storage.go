@@ -75,7 +75,7 @@ func (db *DB) Close() {
 	db.base.Close()
 }
 
-func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
+func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
 	userID := ctx.Value(authorization.KeyUserID("UserID"))
 	rows, err := db.base.Query(ctx, "select original_url, short_url from urls where user_id=$1", userID.(string))
 	if err != nil {
@@ -86,9 +86,14 @@ func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
 	var userURLS []models.UserURLS
 	for rows.Next() {
 		var urls models.UserURLS
-
-		if err := rows.Scan(&urls.OriginURL, &urls.ShortURL); err != nil {
+		var shortUrl string
+		if err := rows.Scan(&urls.OriginURL, &shortUrl); err != nil {
 			return nil, fmt.Errorf("failed to scan row: %v", err)
+		}
+
+		urls.ShortURL, err = url.JoinPath(host, shortUrl)
+		if err != nil {
+			return nil, fmt.Errorf("failed to join path: %v", err)
 		}
 
 		userURLS = append(userURLS, urls)
