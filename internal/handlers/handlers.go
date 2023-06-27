@@ -180,6 +180,11 @@ func GetUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l logge
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	res.Header().Set("Content-Type", "application/json")
+	if len(userURLS) == 0 {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	ans, err := json.Marshal(userURLS)
 	if err != nil {
@@ -189,6 +194,6 @@ func GetUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l logge
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(http.StatusOK)
 	res.Write(ans)
 }
