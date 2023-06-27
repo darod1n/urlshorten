@@ -16,6 +16,7 @@ type DB interface {
 	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
+	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
 	Close()
 }
 

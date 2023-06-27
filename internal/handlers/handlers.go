@@ -17,6 +17,7 @@ type Storage interface {
 	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
+	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
 }
 
 type logger interface {
@@ -169,4 +170,30 @@ func Ping(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 		return
 	}
 	res.WriteHeader(http.StatusOK)
+}
+
+func GetUserURLS(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	ctx := req.Context()
+	userURLS, err := db.GetUserURLS(ctx, serverHost)
+	if err != nil {
+		l.Errorf("failed to get user urls: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	res.Header().Set("Content-Type", "application/json")
+	if len(userURLS) == 0 {
+		res.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	ans, err := json.Marshal(userURLS)
+	if err != nil {
+		l.Errorf("failed to marshal result: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	res.Write(ans)
 }

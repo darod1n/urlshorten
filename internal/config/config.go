@@ -5,11 +5,14 @@ import (
 	"os"
 )
 
+const secretKey = "EnvSuperSecretKey"
+
 type Config struct {
 	Addr           string
 	ServerHost     string
 	Path           string
 	DataSourceName string
+	SecretKey      string
 }
 
 func NewConfig() *Config {
@@ -18,6 +21,7 @@ func NewConfig() *Config {
 	config.ServerHost = os.Getenv("BASE_URL")
 	config.Path = os.Getenv("FILE_STORAGE_PATH")
 	config.DataSourceName = os.Getenv("DATABASE_DSN")
+	config.SecretKey = secretKey
 
 	var flagAddr string
 	var flagServerHost string

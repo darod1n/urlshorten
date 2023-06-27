@@ -48,6 +48,10 @@ func (db *DB) PingContext(ctx context.Context) error {
 func (db *DB) Close() {
 }
 
+func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
+	return nil, nil
+}
+
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
 	var data []models.BatchResponse
 	for _, val := range batch {
