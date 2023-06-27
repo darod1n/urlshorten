@@ -54,7 +54,7 @@ func main() {
 		handlers.Batch(serverConfig.ServerHost, db, w, r, l)
 	})
 
-	router.Post("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetUserURLS(db, w, r, l)
 	})
 
