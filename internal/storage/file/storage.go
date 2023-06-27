@@ -48,10 +48,6 @@ func (db *DB) PingContext(ctx context.Context) error {
 func (db *DB) Close() {
 }
 
-func (db *DB) CreateUserID(ctx context.Context) (string, error) {
-	return "", nil
-}
-
 func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
 	return nil, nil
 }

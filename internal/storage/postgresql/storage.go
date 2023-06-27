@@ -75,16 +75,6 @@ func (db *DB) Close() {
 	db.base.Close()
 }
 
-func (db *DB) CreateUserID(ctx context.Context) (string, error) {
-	row := db.base.QueryRow(ctx, "insert into user_id default values returning id;")
-	var userID string
-	err := row.Scan(&userID)
-	if err != nil {
-		return "", fmt.Errorf("failed to scan query create user_id: %v", err)
-	}
-	return userID, nil
-}
-
 func (db *DB) GetUserURLS(ctx context.Context) ([]models.UserURLS, error) {
 	userID := ctx.Value(authorization.KeyUserID("UserID"))
 	rows, err := db.base.Query(ctx, "select original_url, short_url from urls where user_id=$1", userID.(string))
@@ -145,12 +135,7 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 
 func createDB(ctx context.Context, db *pgxpool.Pool) error {
 	if _, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique, user_id uuid);"); err != nil {
-
 		return fmt.Errorf("failed to create urls table: %v", err)
-	}
-
-	if _, err := db.Exec(ctx, "create table if not exists user_id(id uuid default gen_random_uuid() primary key);"); err != nil {
-		return fmt.Errorf("failed to create user_id table: %v", err)
 	}
 	return nil
 }

@@ -33,7 +33,7 @@ func main() {
 	})
 
 	router.Use(func(h http.Handler) http.Handler {
-		return authorization.WithAutorization(h, db, serverConfig.SecretKey, l)
+		return authorization.WithAutorization(h, serverConfig.SecretKey, l)
 
 	})
 

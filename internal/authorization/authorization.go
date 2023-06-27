@@ -7,15 +7,12 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string
-}
-
-type Storage interface {
-	CreateUserID(ctx context.Context) (string, error)
 }
 
 type logger interface {
@@ -24,7 +21,7 @@ type logger interface {
 
 type KeyUserID string
 
-func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) http.Handler {
+func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authToken, err := r.Cookie("Authorization-Token")
 		if err != nil {
@@ -34,13 +31,7 @@ func WithAutorization(h http.Handler, db Storage, secretKey string, l logger) ht
 				return
 			}
 
-			userID, err := db.CreateUserID(r.Context())
-			if err != nil {
-				l.Errorf("failed to create UserID: %v", err)
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
+			userID := uuid.NewString()
 			token, err := BuildJWTString(userID, secretKey)
 			if err != nil {
 				l.Errorf("failed to build jwt string: %v", err)
