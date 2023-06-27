@@ -16,6 +16,11 @@ type DB struct {
 	base *pgxpool.Pool
 }
 
+type deleteURLs struct {
+	userID    string
+	shortURLs []string
+}
+
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
@@ -58,13 +63,14 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
-	row := db.base.QueryRow(ctx, "select original_url from urls where short_url=$1;", shortURL)
+func (db *DB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
+	row := db.base.QueryRow(ctx, "select original_url, is_deleted from urls where short_url=$1;", shortURL)
 	var originalURL string
-	if err := row.Scan(&originalURL); err != nil {
-		return "", fmt.Errorf("failed to scan query row: %v", err)
+	var isDeleted bool
+	if err := row.Scan(&originalURL, &isDeleted); err != nil {
+		return "", false, fmt.Errorf("failed to scan query row: %v", err)
 	}
-	return originalURL, nil
+	return originalURL, isDeleted, nil
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
@@ -109,7 +115,7 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	}
 	defer tx.Commit(ctx)
 
-	userID := ctx.Value("UserID")
+	userID := ctx.Value(authorization.KeyUserID("UserID"))
 	var data []models.BatchResponse
 	for _, val := range br {
 
@@ -137,8 +143,32 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	return data, nil
 }
 
+func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
+	batch := &pgx.Batch{}
+	tx, err := db.base.Begin(ctx)
+	if err != nil {
+
+		return fmt.Errorf("failed to begin tx: %v", err)
+	}
+	defer tx.Commit(ctx)
+
+	for _, val := range urls {
+		batch.Queue("UPDATE urls SET is_deleted=true where short_url=$1 and user_id=$2::uuid;", val, userID)
+	}
+	b := tx.SendBatch(ctx, batch)
+	defer b.Close()
+
+	if _, err := b.Exec(); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
+			return fmt.Errorf("failed to rollback: %v", err)
+		}
+		return fmt.Errorf("failed to executed query: %v", err)
+	}
+	return nil
+}
+
 func createDB(ctx context.Context, db *pgxpool.Pool) error {
-	if _, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique, user_id uuid);"); err != nil {
+	if _, err := db.Exec(ctx, "create table if not exists urls(short_url text primary key, original_url text unique, user_id uuid, is_deleted bool default false);"); err != nil {
 		return fmt.Errorf("failed to create urls table: %v", err)
 	}
 	return nil
@@ -155,7 +185,9 @@ func NewDB(dataSourceName string) (*DB, error) {
 		return nil, fmt.Errorf("failed to create database: %v", err)
 	}
 
-	return &DB{
+	db := &DB{
 		base: base,
-	}, nil
+	}
+
+	return db, nil
 }

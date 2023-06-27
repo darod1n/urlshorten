@@ -9,15 +9,17 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/models"
 )
 
 type Storage interface {
 	AddURL(ctx context.Context, url string) (string, error)
-	GetURL(ctx context.Context, shortURL string) (string, error)
+	GetURL(ctx context.Context, shortURL string) (string, bool, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
 	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
+	DeleteUserURLS(ctx context.Context, userID string, urls []string) error
 }
 
 type logger interface {
@@ -67,9 +69,14 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	bigURL, err := db.GetURL(ctx, shortURL)
+	bigURL, isDeleted, err := db.GetURL(ctx, shortURL)
 	if err != nil {
 		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if isDeleted {
+		res.WriteHeader(http.StatusGone)
 		return
 	}
 
@@ -196,4 +203,31 @@ func GetUserURLS(serverHost string, db Storage, res http.ResponseWriter, req *ht
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusOK)
 	res.Write(ans)
+}
+
+func DeleteUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
+	var buf bytes.Buffer
+
+	if _, err := buf.ReadFrom(req.Body); err != nil {
+		l.Errorf("failed to read body: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var shortURLS []string
+	if err := json.Unmarshal(buf.Bytes(), &shortURLS); err != nil {
+		l.Errorf("failed to unmarsharl: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userID := req.Context().Value(authorization.KeyUserID("UserID"))
+
+	go func() {
+		if err := db.DeleteUserURLS(context.TODO(), userID.(string), shortURLS); err != nil {
+			l.Errorf("failed delete user urls: %v", err)
+		}
+	}()
+
+	res.WriteHeader(http.StatusAccepted)
 }

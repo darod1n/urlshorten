@@ -29,12 +29,12 @@ func (db *MockDB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, error) {
+func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
 	bigURL, ok := db.urls[shortURL]
 	if ok {
-		return bigURL, nil
+		return bigURL, false, nil
 	}
-	return bigURL, errors.New("")
+	return bigURL, false, errors.New("")
 }
 
 func (db *MockDB) PingContext(ctx context.Context) error {
@@ -47,6 +47,10 @@ func (db *MockDB) Batch(ctx context.Context, host string, batch []models.BatchRe
 
 func (db *MockDB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
 	return nil, nil
+}
+
+func (db *MockDB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
+	return nil
 }
 
 func TestShortURL(t *testing.T) {

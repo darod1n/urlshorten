@@ -37,7 +37,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
+func (db *DB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
 	return db.memory.GetURL(ctx, shortURL)
 }
 
@@ -66,6 +66,10 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	return data, nil
+}
+
+func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
+	return nil
 }
 
 func NewDB(path string) (*DB, error) {

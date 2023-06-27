@@ -58,6 +58,10 @@ func main() {
 		handlers.GetUserURLS(serverConfig.ServerHost, db, w, r, l)
 	})
 
+	router.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+		handlers.DeleteUserURLS(db, w, r, l)
+	})
+
 	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Ping(db, w, r, l)
 	})
