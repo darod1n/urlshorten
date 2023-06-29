@@ -32,7 +32,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 			}
 
 			userID := uuid.NewString()
-			token, err := BuildJWTString(userID, secretKey)
+			token, err := buildJWTString(userID, secretKey)
 			if err != nil {
 				l.Errorf("failed to build jwt string: %v", err)
 			}
@@ -48,7 +48,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 			return
 		}
 
-		userID, err := GetUserID(authToken.Value, secretKey)
+		userID, err := getUserID(authToken.Value, secretKey)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -64,7 +64,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 	})
 }
 
-func GetUserID(tokenString, secretKey string) (string, error) {
+func getUserID(tokenString, secretKey string) (string, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -82,7 +82,7 @@ func GetUserID(tokenString, secretKey string) (string, error) {
 	return claims.UserID, nil
 }
 
-func BuildJWTString(userID, secretKey string) (string, error) {
+func buildJWTString(userID, secretKey string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		UserID: userID,
 	})
