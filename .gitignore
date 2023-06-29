@@ -21,6 +21,10 @@ vendor/
 # Temporary storage
 tmp/short-url-db.json
 
+# Linter directories
+
+golangci-lint/
+
 # IDEs directories
 .idea
 .vscode
