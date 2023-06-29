@@ -224,7 +224,7 @@ func DeleteUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l lo
 	userID := req.Context().Value(authorization.KeyUserID("UserID"))
 
 	go func() {
-		ctx, cancel := context.WithTimeout(req.Context(), time.Second*10)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		if err := db.DeleteUserURLS(ctx, userID.(string), shortURLS); err != nil {
 			l.Errorf("failed delete user urls: %v", err)
