@@ -44,7 +44,7 @@ func (db *DB) Close() {
 }
 
 func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	return nil, fmt.Errorf("not yet implemented")
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
