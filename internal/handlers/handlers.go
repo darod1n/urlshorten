@@ -27,17 +27,23 @@ type logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-type data struct {
+type userData struct {
 	URL string `json:"url"`
 }
 type result struct {
 	Result string `json:"result"`
 }
 
+const (
+	location        = "Location"
+	apllicationJSON = "application/json"
+	contentType     = "Content-Type"
+)
+
 func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		l.Errorf("failed to read body: %v", err)
+		l.Errorf("failed to read body: %w", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -47,7 +53,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 	shortURL, err := db.AddURL(ctx, string(body))
 	if err != nil {
 		if !errors.Is(err, models.ErrExistURL) {
-			l.Errorf("failed to add url: %v", err)
+			l.Errorf("failed to add url: %w", err)
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -56,14 +62,14 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 	resultURL, err := url.JoinPath(serverHost, shortURL)
 	if err != nil {
-		l.Errorf("failed to join path: %v", err)
+		l.Errorf("failed to join path: %w", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	res.WriteHeader(status)
 	if _, err := res.Write([]byte(resultURL)); err != nil {
-		l.Errorf("failed to write byte: %v", err)
+		l.Errorf("failed to write byte: %w", err)
 		res.WriteHeader(http.StatusBadRequest)
 	}
 }
@@ -80,7 +86,7 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 		return
 	}
 
-	res.Header().Set("Location", bigURL)
+	res.Header().Set(location, bigURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
@@ -88,14 +94,14 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	var buf bytes.Buffer
 	_, err := buf.ReadFrom(req.Body)
 	if err != nil {
-		l.Errorf("failed to read body: %v", err)
+		l.Errorf("failed to read body: %w", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	var d data
-	if err := json.Unmarshal(buf.Bytes(), &d); err != nil {
-		l.Errorf("failed to unmarshal the request body: %v", err)
+	var ud userData
+	if err := json.Unmarshal(buf.Bytes(), &ud); err != nil {
+		l.Errorf("failed to unmarshal the request body: %w", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -103,10 +109,10 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 	ctx := req.Context()
 	status := http.StatusCreated
 	var result result
-	shortURL, err := db.AddURL(ctx, d.URL)
+	shortURL, err := db.AddURL(ctx, ud.URL)
 	if err != nil {
 		if shortURL == "" {
-			l.Errorf("failed to add url: %v", err)
+			l.Errorf("failed to add url: %w", err)
 			res.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -128,9 +134,12 @@ func APIShortenURL(serverHost string, db Storage, res http.ResponseWriter, req *
 		return
 	}
 
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set(contentType, apllicationJSON)
 	res.WriteHeader(status)
-	res.Write(ans)
+	if _, err := res.Write(ans); err != nil {
+		l.Errorf("handler APIShortenURL failed to Write result: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+	}
 }
 
 func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Request, l logger) {
@@ -147,7 +156,6 @@ func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Req
 		l.Errorf("failed to unmarshal body: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
-
 	}
 
 	ctx := req.Context()
@@ -164,9 +172,12 @@ func Batch(serverHost string, db Storage, res http.ResponseWriter, req *http.Req
 		return
 	}
 
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set(contentType, apllicationJSON)
 	res.WriteHeader(http.StatusCreated)
-	res.Write(ans)
+	if _, err := res.Write(ans); err != nil {
+		l.Errorf("handler Batch failed to Write result: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+	}
 }
 
 func Ping(db Storage, res http.ResponseWriter, req *http.Request, l logger) {
@@ -187,7 +198,7 @@ func GetUserURLS(serverHost string, db Storage, res http.ResponseWriter, req *ht
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set(contentType, apllicationJSON)
 	if len(userURLS) == 0 {
 		res.WriteHeader(http.StatusNoContent)
 		return
@@ -200,9 +211,12 @@ func GetUserURLS(serverHost string, db Storage, res http.ResponseWriter, req *ht
 		return
 	}
 
-	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set(contentType, apllicationJSON)
 	res.WriteHeader(http.StatusOK)
-	res.Write(ans)
+	if _, err := res.Write(ans); err != nil {
+		l.Errorf("handler GetUserURLS failed to Write: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+	}
 }
 
 func DeleteUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l logger) {

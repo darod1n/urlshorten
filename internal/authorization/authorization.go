@@ -21,6 +21,8 @@ type logger interface {
 
 type KeyUserID string
 
+const UserID = "UserID"
+
 func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authToken, err := r.Cookie("Authorization-Token")
@@ -43,7 +45,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 			}
 			http.SetCookie(w, cookie)
 
-			ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
+			ctx := context.WithValue(r.Context(), KeyUserID(UserID), userID)
 			h.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -73,7 +75,7 @@ func getUserID(tokenString, secretKey string) (string, error) {
 		return []byte(secretKey), nil
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to parse token: %v", err)
+		return "", fmt.Errorf("failed to parse token: %w", err)
 	}
 
 	if !token.Valid {
@@ -89,7 +91,7 @@ func buildJWTString(userID, secretKey string) (string, error) {
 
 	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
-		return "", fmt.Errorf("failed to get signed string: %v", err)
+		return "", fmt.Errorf("failed to get signed string: %w", err)
 	}
 
 	return tokenString, nil

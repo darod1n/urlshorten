@@ -22,7 +22,7 @@ type DB struct {
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	shortURL, err := db.memory.AddURL(ctx, url)
 	if err != nil {
-		return "", fmt.Errorf("failed to add url to memory storage: %v", err)
+		return "", fmt.Errorf("failed to add url to memory storage: %w", err)
 	}
 
 	event := event{
@@ -53,20 +53,20 @@ func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, 
 	return db.memory.GetUserURLS(ctx, host)
 }
 
-func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
-	var data []models.BatchResponse
-	for _, val := range batch {
+func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) ([]models.BatchResponse, error) {
+	bResp := make([]models.BatchResponse, len(br))
+	for _, val := range br {
 		shortURL, err := db.AddURL(ctx, val.OriginURL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to add url: %v", err)
+			return nil, fmt.Errorf("failed to add url: %w", err)
 		}
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to join path: %v", err)
+			return nil, fmt.Errorf("failed to join path: %w", err)
 		}
-		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
+		bResp = append(bResp, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-	return data, nil
+	return bResp, nil
 }
 
 func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
@@ -77,12 +77,12 @@ func NewDB(path string) (*DB, error) {
 
 	p, err := newProducer(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create producer: %w", err)
 	}
 
 	c, err := newConsumer(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create consumer: %w", err)
 	}
 
 	urls, err := c.GetMap()
@@ -91,7 +91,7 @@ func NewDB(path string) (*DB, error) {
 	}
 	memory, err := memory.NewDB(urls)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create memory db: %w", err)
 	}
 
 	uuid := len(urls)

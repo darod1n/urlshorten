@@ -13,6 +13,15 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	HandlerIndex           = "/"
+	HandlerShortURL        = "/{shortURL}"
+	HandlerAPIShorten      = "/api/shorten"
+	HandlerAPIShortenBatch = "/api/shorten/batch"
+	HandlerAPIUserURLS     = "/api/user/urls"
+	HandlerPing            = "/ping"
+)
+
 func main() {
 	l, err := logger.InitializeLoger()
 	if err != nil {
@@ -34,39 +43,38 @@ func main() {
 
 	router.Use(func(h http.Handler) http.Handler {
 		return authorization.WithAutorization(h, serverConfig.SecretKey, l)
-
 	})
 
 	router.Use(compression.WithCompress)
 
-	router.Get("/{shortURL}", func(w http.ResponseWriter, r *http.Request) {
+	router.Get(HandlerShortURL, func(w http.ResponseWriter, r *http.Request) {
 		shortURL := chi.URLParam(r, "shortURL")
 		handlers.GetBigURL(shortURL, db, w, r)
 	})
-	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Post(HandlerIndex, func(w http.ResponseWriter, r *http.Request) {
 		handlers.ShortURL(serverConfig.ServerHost, db, w, r, l)
 	})
-	router.Post("/api/shorten", func(w http.ResponseWriter, r *http.Request) {
+	router.Post(HandlerAPIShorten, func(w http.ResponseWriter, r *http.Request) {
 		handlers.APIShortenURL(serverConfig.ServerHost, db, w, r, l)
 	})
 
-	router.Post("/api/shorten/batch", func(w http.ResponseWriter, r *http.Request) {
+	router.Post(HandlerAPIShortenBatch, func(w http.ResponseWriter, r *http.Request) {
 		handlers.Batch(serverConfig.ServerHost, db, w, r, l)
 	})
 
-	router.Get("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+	router.Get(HandlerAPIUserURLS, func(w http.ResponseWriter, r *http.Request) {
 		handlers.GetUserURLS(serverConfig.ServerHost, db, w, r, l)
 	})
 
-	router.Delete("/api/user/urls", func(w http.ResponseWriter, r *http.Request) {
+	router.Delete(HandlerAPIUserURLS, func(w http.ResponseWriter, r *http.Request) {
 		handlers.DeleteUserURLS(db, w, r, l)
 	})
 
-	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+	router.Get(HandlerPing, func(w http.ResponseWriter, r *http.Request) {
 		handlers.Ping(db, w, r, l)
 	})
 
-	http.Handle("/", router)
+	http.Handle(HandlerIndex, router)
 
 	l.Infow(
 		"Starting server",

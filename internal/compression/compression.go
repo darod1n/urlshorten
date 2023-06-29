@@ -17,10 +17,17 @@ func newGzipWriter(w http.ResponseWriter) *gzipWriter {
 	return &gzipWriter{zw: gzip.NewWriter(w), ResponseWriter: w}
 }
 
-func (gz *gzipWriter) WriteHeader(statusCode int) {
+const (
+	contentEncodingKey  = "Content-Encoding"
+	gzipKey             = "gzip"
+	typeApplicationJSON = "application/json"
+	typeTextHTML        = "text/html"
+	statusCodesGZIP     = 300
+)
 
-	if statusCode < 300 {
-		gz.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+func (gz *gzipWriter) WriteHeader(statusCode int) {
+	if statusCode < statusCodesGZIP {
+		gz.ResponseWriter.Header().Set(contentEncodingKey, gzipKey)
 	}
 	gz.ResponseWriter.WriteHeader(statusCode)
 }
@@ -39,7 +46,6 @@ type gzipReader struct {
 }
 
 func newGzipReader(r io.ReadCloser) (*gzipReader, error) {
-
 	zr, err := gzip.NewReader(r)
 	if err != nil {
 		return nil, err
@@ -65,18 +71,17 @@ func WithCompress(h http.Handler) http.Handler {
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		contentType := r.Header.Get("Content-Type")
-		supportGzip := strings.Contains(acceptEncoding, "gzip") && (strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html"))
+		supportGzip := strings.Contains(acceptEncoding, gzipKey) && (strings.Contains(contentType, typeApplicationJSON) || strings.Contains(contentType, typeTextHTML))
 		if supportGzip {
 			gw := newGzipWriter(w)
 			ow = gw
 
 			defer gw.Close()
-
 		}
 
-		contentEncoding := r.Header.Get("Content-Encoding")
+		contentEncoding := r.Header.Get(contentEncodingKey)
 
-		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		sendsGzip := strings.Contains(contentEncoding, gzipKey)
 		if sendsGzip {
 			gr, err := newGzipReader(r.Body)
 			if err != nil {

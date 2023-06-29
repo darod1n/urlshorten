@@ -75,5 +75,4 @@ func WithLoggin(h http.Handler, l *zap.SugaredLogger) http.Handler {
 			"size", responseData.size, // получаем перехваченный размер ответа
 		)
 	})
-
 }

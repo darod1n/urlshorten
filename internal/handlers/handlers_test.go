@@ -138,7 +138,6 @@ func TestGetBigURL(t *testing.T) {
 			defer res.Body.Close()
 
 			assert.Equal(t, res.StatusCode, test.want.code)
-
 		})
 	}
 }
@@ -152,7 +151,6 @@ func TestAPIShortenURL(t *testing.T) {
 		want    want
 		testURL string
 	}{
-
 		{
 			name: "positive test #1",
 			want: want{

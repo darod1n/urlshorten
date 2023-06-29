@@ -48,20 +48,20 @@ func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, 
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
-	var data []models.BatchResponse
+	br := make([]models.BatchResponse, len(batch))
 	for _, val := range batch {
 		shortURL, err := db.AddURL(ctx, val.OriginURL)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to add url: %w", err)
 		}
 		url, err := url.JoinPath(host, shortURL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to join path: %v", err)
+			return nil, fmt.Errorf("failed to join path: %w", err)
 		}
 
-		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
+		br = append(br, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
-	return data, nil
+	return br, nil
 }
 func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
 	return models.ErrRemoveURL
