@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/models"
@@ -15,7 +16,7 @@ import (
 
 type Storage interface {
 	AddURL(ctx context.Context, url string) (string, error)
-	GetURL(ctx context.Context, shortURL string) (string, bool, error)
+	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
 	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
@@ -69,14 +70,13 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 
 func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
-	bigURL, isDeleted, err := db.GetURL(ctx, shortURL)
+	bigURL, err := db.GetURL(ctx, shortURL)
 	if err != nil {
+		if errors.Is(err, models.ErrRemoveURL) {
+			res.WriteHeader(http.StatusGone)
+			return
+		}
 		res.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	if isDeleted {
-		res.WriteHeader(http.StatusGone)
 		return
 	}
 
@@ -224,7 +224,9 @@ func DeleteUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l lo
 	userID := req.Context().Value(authorization.KeyUserID("UserID"))
 
 	go func() {
-		if err := db.DeleteUserURLS(context.TODO(), userID.(string), shortURLS); err != nil {
+		ctx, cancel := context.WithTimeout(req.Context(), time.Second*60)
+		defer cancel()
+		if err := db.DeleteUserURLS(ctx, userID.(string), shortURLS); err != nil {
 			l.Errorf("failed delete user urls: %v", err)
 		}
 	}()

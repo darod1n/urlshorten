@@ -26,25 +26,25 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *DB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
+func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	bigURL, ok := db.urls[shortURL]
 	if ok {
-		return bigURL, false, nil
+		return bigURL, nil
 	}
-	return "", false, errors.New("failed to get url")
+	return "", errors.New("failed to get url")
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
-	return nil
+	return models.ErrNYI
 }
 
 func (db *DB) Close() {
 }
 
 func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
-	return nil, nil
+	return nil, fmt.Errorf("Not yet implemented")
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
@@ -64,7 +64,7 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	return data, nil
 }
 func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
-	return nil
+	return models.ErrRemoveURL
 }
 
 func NewDB(urls map[string]string) (*DB, error) {

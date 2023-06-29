@@ -63,14 +63,19 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *DB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
+func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	row := db.base.QueryRow(ctx, "select original_url, is_deleted from urls where short_url=$1;", shortURL)
 	var originalURL string
 	var isDeleted bool
-	if err := row.Scan(&originalURL, &isDeleted); err != nil {
-		return "", false, fmt.Errorf("failed to scan query row: %v", err)
+	err := row.Scan(&originalURL, &isDeleted)
+	if err != nil {
+		return "", fmt.Errorf("failed to scan query row: %v", err)
 	}
-	return originalURL, isDeleted, nil
+
+	if isDeleted {
+		return "", models.ErrRemoveURL
+	}
+	return originalURL, nil
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
@@ -160,7 +165,7 @@ func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) 
 
 	if _, err := b.Exec(); err != nil {
 		if err := tx.Rollback(ctx); err != nil {
-			return fmt.Errorf("failed to rollback: %v", err)
+			return fmt.Errorf("failed to rollback: %w", err)
 		}
 		return fmt.Errorf("failed to executed query: %v", err)
 	}

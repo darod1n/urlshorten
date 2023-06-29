@@ -29,12 +29,12 @@ func (db *MockDB) AddURL(ctx context.Context, url string) (string, error) {
 	return shortURL, nil
 }
 
-func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, bool, error) {
+func (db *MockDB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	bigURL, ok := db.urls[shortURL]
 	if ok {
-		return bigURL, false, nil
+		return bigURL, nil
 	}
-	return bigURL, false, errors.New("")
+	return bigURL, errors.New("")
 }
 
 func (db *MockDB) PingContext(ctx context.Context) error {

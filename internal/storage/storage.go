@@ -13,7 +13,7 @@ import (
 
 type DB interface {
 	AddURL(ctx context.Context, url string) (string, error)
-	GetURL(ctx context.Context, shortURL string) (string, bool, error)
+	GetURL(ctx context.Context, shortURL string) (string, error)
 	PingContext(ctx context.Context) error
 	Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error)
 	GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error)
