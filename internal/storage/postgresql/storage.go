@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/jackc/pgx/v5"
@@ -24,7 +23,7 @@ type deleteURLs struct {
 const driverName = "pgx"
 
 func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
-	userID := ctx.Value(authorization.KeyUserID("UserID"))
+	userID := ctx.Value(models.CtxKeyUserID)
 	shortURL := helpers.GenerateShortURL(url, 10)
 	row := db.base.QueryRow(ctx, `
 	with dataNew as (
@@ -87,7 +86,7 @@ func (db *DB) Close() {
 }
 
 func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
-	userID := ctx.Value(authorization.KeyUserID("UserID"))
+	userID := ctx.Value(models.CtxKeyUserID)
 	rows, err := db.base.Query(ctx, "select original_url, short_url from urls where user_id=$1", userID.(string))
 	if err != nil {
 		return nil, fmt.Errorf("failed to query: %v", err)
@@ -120,7 +119,7 @@ func (db *DB) Batch(ctx context.Context, host string, br []models.BatchRequest) 
 	}
 	defer tx.Commit(ctx)
 
-	userID := ctx.Value(authorization.KeyUserID("UserID"))
+	userID := ctx.Value(models.CtxKeyUserID)
 	var data []models.BatchResponse
 	for _, val := range br {
 

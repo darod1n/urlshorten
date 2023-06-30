@@ -14,3 +14,10 @@ type UserURLS struct {
 	OriginURL string `json:"original_url"`
 	ShortURL  string `json:"short_url"`
 }
+
+type ctxKey int8
+
+const (
+	_ ctxKey = iota
+	CtxKeyUserID
+)

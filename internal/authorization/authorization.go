@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/darod1n/urlshorten/internal/models"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
@@ -20,6 +21,7 @@ type logger interface {
 }
 
 type KeyUserID string
+type ctxKey int8
 
 func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +45,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 			}
 			http.SetCookie(w, cookie)
 
-			ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
+			ctx := context.WithValue(r.Context(), models.CtxKeyUserID, userID)
 			h.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -59,7 +61,7 @@ func WithAutorization(h http.Handler, secretKey string, l logger) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), KeyUserID("UserID"), userID)
+		ctx := context.WithValue(r.Context(), models.CtxKeyUserID, userID)
 		h.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

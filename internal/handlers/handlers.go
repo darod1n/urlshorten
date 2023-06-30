@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/darod1n/urlshorten/internal/authorization"
 	"github.com/darod1n/urlshorten/internal/models"
 )
 
@@ -221,7 +220,7 @@ func DeleteUserURLS(db Storage, res http.ResponseWriter, req *http.Request, l lo
 		return
 	}
 
-	userID := req.Context().Value(authorization.KeyUserID("UserID"))
+	userID := req.Context().Value(models.CtxKeyUserID)
 
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
