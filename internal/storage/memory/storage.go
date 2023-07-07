@@ -9,6 +9,7 @@ import (
 
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
+	"github.com/darod1n/urlshorten/internal/storage/errstorage"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -37,10 +38,14 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
-	return nil
+	return errstorage.ErrNYI
 }
 
 func (db *DB) Close() {
+}
+
+func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
+	return nil, errstorage.ErrNYI
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
@@ -58,6 +63,9 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 		data = append(data, models.BatchResponse{CorrelationID: val.CorrelationID, ShortURL: url})
 	}
 	return data, nil
+}
+func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
+	return errstorage.ErrRemoveURL
 }
 
 func NewDB(urls map[string]string) (*DB, error) {

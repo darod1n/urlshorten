@@ -10,6 +10,7 @@ type Config struct {
 	ServerHost     string
 	Path           string
 	DataSourceName string
+	SecretKey      string
 }
 
 func NewConfig() *Config {
@@ -18,16 +19,19 @@ func NewConfig() *Config {
 	config.ServerHost = os.Getenv("BASE_URL")
 	config.Path = os.Getenv("FILE_STORAGE_PATH")
 	config.DataSourceName = os.Getenv("DATABASE_DSN")
+	config.SecretKey = os.Getenv("SECRET_KEY")
 
 	var flagAddr string
 	var flagServerHost string
 	var flagPath string
 	var flagDataSourceName string
+	var flagSecretKey string
 
 	flag.StringVar(&flagAddr, "a", ":8080", "http-server address")
 	flag.StringVar(&flagServerHost, "b", "http://localhost:8080", "base address result short url")
 	flag.StringVar(&flagPath, "f", "", "File path")
 	flag.StringVar(&flagDataSourceName, "d", "", "database data source name")
+	flag.StringVar(&flagSecretKey, "s", "EnvSuperSecretKey", "secret key")
 	flag.Parse()
 
 	if config.Addr == "" {
@@ -44,6 +48,10 @@ func NewConfig() *Config {
 
 	if config.DataSourceName == "" {
 		config.DataSourceName = flagDataSourceName
+	}
+
+	if config.SecretKey == "" {
+		config.SecretKey = flagSecretKey
 	}
 
 	return config
