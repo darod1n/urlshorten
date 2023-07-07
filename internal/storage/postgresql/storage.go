@@ -7,6 +7,7 @@ import (
 
 	"github.com/darod1n/urlshorten/internal/helpers"
 	"github.com/darod1n/urlshorten/internal/models"
+	"github.com/darod1n/urlshorten/internal/storage/errstorage"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -56,7 +57,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
 	if status {
-		return queryShortURL, models.ErrExistURL
+		return queryShortURL, errstorage.ExistURL
 	}
 
 	return shortURL, nil
@@ -72,7 +73,7 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	}
 
 	if isDeleted {
-		return "", models.ErrRemoveURL
+		return "", errstorage.RemoveURL
 	}
 	return originalURL, nil
 }
