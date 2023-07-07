@@ -3,7 +3,7 @@ package errstorage
 import "errors"
 
 var (
-	ExistURL  = errors.New("url exist")
-	RemoveURL = errors.New("url removed")
-	NYI       = errors.New("not yet implemented")
+	ErrExistURL  = errors.New("url exist")
+	ErrRemoveURL = errors.New("url removed")
+	ErrNYI       = errors.New("not yet implemented")
 )

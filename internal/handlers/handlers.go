@@ -46,7 +46,7 @@ func ShortURL(serverHost string, db Storage, res http.ResponseWriter, req *http.
 	ctx := req.Context()
 	shortURL, err := db.AddURL(ctx, string(body))
 	if err != nil {
-		if !errors.Is(err, errstorage.ExistURL) {
+		if !errors.Is(err, errstorage.ErrExistURL) {
 			l.Errorf("failed to add url: %v", err)
 			res.WriteHeader(http.StatusBadRequest)
 			return
@@ -72,7 +72,7 @@ func GetBigURL(shortURL string, db Storage, res http.ResponseWriter, req *http.R
 	ctx := req.Context()
 	bigURL, err := db.GetURL(ctx, shortURL)
 	if err != nil {
-		if errors.Is(err, errstorage.RemoveURL) {
+		if errors.Is(err, errstorage.ErrRemoveURL) {
 			res.WriteHeader(http.StatusGone)
 			return
 		}

@@ -57,7 +57,7 @@ func (db *DB) AddURL(ctx context.Context, url string) (string, error) {
 		return "", fmt.Errorf("failed scan query: %v", err)
 	}
 	if status {
-		return queryShortURL, errstorage.ExistURL
+		return queryShortURL, errstorage.ErrExistURL
 	}
 
 	return shortURL, nil
@@ -73,7 +73,7 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 	}
 
 	if isDeleted {
-		return "", errstorage.RemoveURL
+		return "", errstorage.ErrRemoveURL
 	}
 	return originalURL, nil
 }

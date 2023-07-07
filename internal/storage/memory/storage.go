@@ -38,14 +38,14 @@ func (db *DB) GetURL(ctx context.Context, shortURL string) (string, error) {
 }
 
 func (db *DB) PingContext(ctx context.Context) error {
-	return errstorage.NYI
+	return errstorage.ErrNYI
 }
 
 func (db *DB) Close() {
 }
 
 func (db *DB) GetUserURLS(ctx context.Context, host string) ([]models.UserURLS, error) {
-	return nil, errstorage.NYI
+	return nil, errstorage.ErrNYI
 }
 
 func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchRequest) ([]models.BatchResponse, error) {
@@ -65,7 +65,7 @@ func (db *DB) Batch(ctx context.Context, host string, batch []models.BatchReques
 	return data, nil
 }
 func (db *DB) DeleteUserURLS(ctx context.Context, userID string, urls []string) error {
-	return errstorage.RemoveURL
+	return errstorage.ErrRemoveURL
 }
 
 func NewDB(urls map[string]string) (*DB, error) {
